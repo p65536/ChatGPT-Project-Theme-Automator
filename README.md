@@ -35,15 +35,15 @@ The project feature in ChatGPT is available only to Plus users and above (as of 
 
 ### 1. For free users or chats not linked to any project
 The default theme defined in this script is applied.  
-![Default theme for free users](docs/cpta_001.png)
+![Default theme for free users](/docs/cpta_001.png)
 
 ### 2. When opening a chat in a project named "Tampermonkey Scripts" (with a theme set for it)
 The project-specific theme for "Tampermonkey Scripts" is applied (different icons/colors from default).  
-![Plus user example (Tampermonkey Scripts)](docs/cpta_002.png)
+![Plus user example (Tampermonkey Scripts)](/docs/cpta_002.png)
 
 ### 3. When opening a chat in a project named "Dungeon Master" (with a theme set for it)
 The project-specific theme for "Dungeon Master" is applied (distinct from default or other project themes).  
-![Plus user example (Dungeon Master)](docs/cpta_003.png)
+![Plus user example (Dungeon Master)](/docs/cpta_003.png)
 
 ---
 
@@ -126,7 +126,7 @@ The project-specific theme for "Dungeon Master" is applied (distinct from defaul
 const ICON_SIZE = 64;
 ```
 
-![ICON\_SIZE = 64](docs/cpta_iconsize_64.png)
+![ICON\_SIZE = 64](/docs/cpta_iconsize_64.png)
 
 ### ICON\_SIZE = 96
 
@@ -134,7 +134,7 @@ const ICON_SIZE = 64;
 const ICON_SIZE = 96;
 ```
 
-![ICON\_SIZE = 96](docs/cpta_iconsize_96.png)
+![ICON\_SIZE = 96](/docs/cpta_iconsize_96.png)
 
 ### ICON\_SIZE = 128
 
@@ -142,7 +142,7 @@ const ICON_SIZE = 96;
 const ICON_SIZE = 128;
 ```
 
-![ICON\_SIZE = 128](docs/cpta_iconsize_128.png)
+![ICON\_SIZE = 128](/docs/cpta_iconsize_128.png)
 
 ---
 
