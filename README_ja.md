@@ -35,15 +35,15 @@ ChatGPTのプロジェクト機能を使えるのはPlusユーザー以上（202
 
 ### 1. フリーユーザーの場合や特定のプロジェクトに紐づかないチャットの場合
 本スクリプトで設定したデフォルトのテーマが適用される
-![フリーユーザーの実行イメージ](docs/cpta_001.png)
+![フリーユーザーの実行イメージ](/docs/cpta_001.png)
 
 ### 2. プロジェクト名「Tampermonkey Scripts」に対するテーマ設定をして同プロジェクトのチャットを開いた場合
 プロジェクト「Tampermonkey Scripts」用のテーマが適用される（デフォルトのテーマとは異なるアイコン・色が使われているのが分かる）
-![Plusユーザーの実行イメージ(Tampermonkey Scripts)](docs/cpta_002.png)
+![Plusユーザーの実行イメージ(Tampermonkey Scripts)](/docs/cpta_002.png)
 
 ### 3. プロジェクト名「Dungeon Master」に対するテーマ設定をして同プロジェクトのチャットを開いた場合
 プロジェクト「Dungeon Master」用のテーマが適用される（デフォルトや他プロジェクトのテーマとは異なるアイコン・色が使われているのが分かる）
-![Plusユーザーの実行イメージ(Dungeon Master)](docs/cpta_003.png)
+![Plusユーザーの実行イメージ(Dungeon Master)](/docs/cpta_003.png)
 
 ---
 
@@ -119,19 +119,19 @@ ChatGPTのプロジェクト機能を使えるのはPlusユーザー以上（202
 ```js
 const ICON_SIZE = 64;
 ```
-![ICON_SIZE = 64](docs/cpta_iconsize_64.png)
+![ICON_SIZE = 64](/docs/cpta_iconsize_64.png)
 
 ### ICON_SIZE = 96
 ```js
 const ICON_SIZE = 96;
 ```
-![ICON_SIZE = 96](docs/cpta_iconsize_96.png)
+![ICON_SIZE = 96](/docs/cpta_iconsize_96.png)
 
 ### ICON_SIZE = 128
 ```js
 const ICON_SIZE = 128;
 ```
-![ICON_SIZE = 128](docs/cpta_iconsize_128.png)
+![ICON_SIZE = 128](/docs/cpta_iconsize_128.png)
 
 ---
 
