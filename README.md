@@ -1,4 +1,9 @@
 # ChatGPT Project Theme Automator
+![license](https://img.shields.io/badge/license-MIT-green)
+![userscript](https://img.shields.io/badge/userscript-Tampermonkey-blueviolet)
+![platform](https://img.shields.io/badge/platform-ChatGPT-lightgrey)
+![topic](https://img.shields.io/badge/topic-theme_automator-ff69b4)
+![topic](https://img.shields.io/badge/topic-ui_enhancement-9cf)
 
 [日本語READMEはこちら (Japanese README is here)](./README_ja.md)
 
