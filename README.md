@@ -5,7 +5,9 @@
 ![topic](https://img.shields.io/badge/topic-theme_automator-ff69b4)
 ![topic](https://img.shields.io/badge/topic-ui_enhancement-9cf)
 
-[日本語READMEはこちら (Japanese README is here)](./README_ja.md)
+[![Download](https://img.shields.io/badge/Download-ChatGPT_Project_Theme_Automator.user.js-blue?style=flat-square&logo=download)](https://github.com/p65536/ChatGPT-Project-Theme-Automator/raw/main/ChatGPT%20Project%20Theme%20Automator.user.js)
+
+[日本語READMEはこちら](./README_ja.md)
 
 ---
 
