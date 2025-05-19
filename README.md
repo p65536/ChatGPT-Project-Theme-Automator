@@ -74,9 +74,16 @@ The project-specific theme for "Dungeon Master" is applied (distinct from defaul
 1. Edit the configuration section near the top of the script, inside `CHATGPT_PROJECT_THEME_CONFIG` (`themeSets` / `defaultSet`).  
    Define the project names and the themes (user name, icon, text color, etc.) you want to apply.
 
-2. **Project names** can be specified as **exact strings** or **regular expressions**.  
-   Regular expressions are recommended. Especially when trying to match Custom GPTs, note that comparison is done against the page title.  
-   As of May 2025, the title format is **"{CustomGPTName} - {ChatName}"**, so it’s recommended to specify patterns as shown below.
+2. **Project names** can be specified as **exact strings** or **regular expressions**.
+   Using regular expressions is generally recommended. While you can directly get the project name for chats that belong to a project, for Custom GPTs, the script compares the chat title instead.
+   However, chat titles can change depending on the situation. For example:
+
+   * **{CustomGPTName} - {ChatName}**
+   * **ChatGPT - {CustomGPTName}**
+   * **ChatGPT**  
+     When starting a new chat with a Custom GPT, sometimes the title might not include the Custom GPT’s name at all. In such cases, if you rename the chat from the sidebar, the Custom GPT name will usually be appended to the end of the title.
+
+   Since chat titles are not always consistent, it is recommended to use a regular expression that matches broadly, such as **/^.*CustomGPTName.*\$/** or simply **/CustomGPTName/**.
 
    Example 1 (exact match):
 
@@ -84,14 +91,12 @@ The project-specific theme for "Dungeon Master" is applied (distinct from defaul
    projects: ['MyProject', 'Project Alpha']
    ```
 
-   Example 2 (regular expressions):
+   Example 2 (regular expression):
 
    ```js
-   // For meticulous users
-   projects: [/^CustomGPTName - .*$/]
-   // For typical users
-   projects: [/^CustomGPTName.*$/]
-   // For easygoing users
+   // For those who prefer to be precise
+   projects: [/^.*CustomGPTName.*$/]
+   // For those who want a more general match
    projects: [/CustomGPTName/]
    ```
 
