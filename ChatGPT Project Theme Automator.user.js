@@ -6,54 +6,36 @@
 // @description  Automatically applies a theme based on the project name (changes user/assistant names, text color, icon, etc.)
 // @author       p65536
 // @match        https://chatgpt.com/*
-// @grant        none
+// @grant        GM_setValue
+// @grant        GM_getValue
 // ==/UserScript==
-
-// [How to specify project names]
-// projects: ['Project 1', 'Project 2'],  // For exact string match, enclose the string in single quotes. For multiple matches, list them separated by commas.
-// projects: [/^Project\d+$/],            // For regular expressions, enclose the pattern in slashes (//). For multiple matches, separate patterns with commas, or write a single pattern to match multiple projects.
-// projects: ['Project 1', /^Project\d+$/], // You can mix exact string and regular expression patterns.
-//
-// [Configurable items]
-// For both `user` and `assistant`, you can set the following:
-//   name: Display name. Note: If the name is too long, it may look awkward due to wrapping/centering in the icon width.
-//   icon: Icon image. You can use either a URL or a base64-encoded image.
-//   textcolor: Text color (e.g., '#b0c4de'). If omitted, the text color will not be changed.
 
 (() => {
     'use strict';
 
-    // ========== CONFIGURATION ==========
-    /**
-      * Define project and theme settings in CHATGPT_PROJECT_THEME_CONFIG.
-      * projects: Project name (string) or RegExp (can be mixed)
-      * user/assistant: { name, icon, textcolor }
-    */
+    // ---- Icon settings ----
+    const ICON_SIZE = 64;
+    const ICON_MARGIN = 16;
+    const ICON_OFFSET = ICON_SIZE + ICON_MARGIN;
 
-    // ==UserConfig==
-    const CHATGPT_PROJECT_THEME_CONFIG = {
+    // ---- Default Settings ----
+    const DEFAULT_THEME_CONFIG = {
         themeSets: [
             {
-                // Theme settings for 'project1'
                 projects: ['project1'],
-                // If you don't specify settings for user, name/icon/textcolor are inherited from defaultSet.
                 user: {
                 },
-                // If you only want to change assistant's textcolor, name/icon will be inherited from defaultSet.
                 assistant: {
                     textcolor: '#FF9900'
                 }
             },
             {
-                // Theme settings for 'project2'
                 projects: ['project2'],
-                // To set all (name, icon, textcolor) for user:
                 user: {
                     name: 'User',
                     icon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#e3e3e3"><path d="M0 0h24v24H0V0z" fill="none"/><circle cx="15.5" cy="9.5" r="1.5"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M12 16c-1.48 0-2.75-.81-3.45-2H6.88c.8 2.05 2.79 3.5 5.12 3.5s4.32-1.45 5.12-3.5h-1.67c-.7 1.19-1.97 2-3.45 2zm-.01-14C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg>',
                     textcolor: '#f0e68c'
                 },
-                // To set only name and icon for assistant: textcolor will be inherited from defaultSet.
                 assistant: {
                     name: 'CPU',
                     icon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#e3e3e3"><path d="M0 0h24v24H0V0z" fill="none"/><circle cx="15.5" cy="9.5" r="1.5"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M12 14c-2.33 0-4.32 1.45-5.12 3.5h1.67c.69-1.19 1.97-2 3.45-2s2.75.81 3.45 2h1.67c-.8-2.05-2.79-3.5-5.12-3.5zm-.01-12C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg>'
@@ -61,7 +43,6 @@
             }
         ],
         defaultSet: {
-            // If only name and icon are specified, text color will not change (same as original ChatGPT)
             user: {
                 name: 'You',
                 icon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#e3e3e3"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12 6c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2m0 10c2.7 0 5.8 1.29 6 2H6c.23-.72 3.31-2 6-2m0-12C9.79 4 8 5.79 8 8s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>'
@@ -72,19 +53,34 @@
             }
         }
     };
-    // ==/UserConfig==
-    // ==============================
 
-    // ======================
-    // Load theme configuration
-    // ======================
-    const THEME_SETS = CHATGPT_PROJECT_THEME_CONFIG.themeSets;
-    const DEFAULT_SET = CHATGPT_PROJECT_THEME_CONFIG.defaultSet;
+    // ---- Common Settings for Modal Functions ----
+    const MODAL_WIDTH = 440;
+    const MODAL_PADDING = 4;
+    const MODAL_RADIUS = 8;
+    const MODAL_BTN_RADIUS = 5;
+    const MODAL_BTN_FONT_SIZE = 13;
+    const MODAL_BTN_PADDING = '5px 16px';
+    const MODAL_TITLE_MARGIN_BOTTOM = 8;
+    const MODAL_BTN_GROUP_GAP = 8;
+    const MODAL_TEXTAREA_HEIGHT = 200;
 
-    // ---- Constants ----
-    const ICON_SIZE = 64;
-    const ICON_MARGIN = 16;
-    const ICON_OFFSET = ICON_SIZE + ICON_MARGIN;
+    // ---- Common functions (load/save) ----
+    const CONFIG_KEY = 'cpta_config';
+    async function loadConfig(key, defaultObj) {
+        try {
+            const raw = await GM_getValue(key);
+            return raw ? JSON.parse(raw) : {...defaultObj};
+        } catch {
+            return {...defaultObj};
+        }
+    }
+    async function saveConfig(key, obj) {
+        await GM_setValue(key, JSON.stringify(obj));
+    }
+
+    // ---- Cache settings ----
+    let CHATGPT_PROJECT_THEME_CONFIG, THEME_SETS, DEFAULT_SET;
 
     // ---- Internal state ----
     let appliedThemeId = null;
@@ -93,15 +89,335 @@
     let containerObserver = null;
     let currentMsgContainer = null;
     let lastProject = null;
+    let lastUserColor = null;
+    let lastAssistantColor = null;
     // Global singleton for title observer
     let currentAnchorObserver = null;
     let currentObservedAnchor = null;
     let currentTitleObserver = null;
     let currentObservedTitle = null;
 
-    // ---- Utility functions ----
+    async function init() {
+        CHATGPT_PROJECT_THEME_CONFIG = await loadConfig(CONFIG_KEY, DEFAULT_THEME_CONFIG);
+        THEME_SETS = CHATGPT_PROJECT_THEME_CONFIG.themeSets;
+        DEFAULT_SET = CHATGPT_PROJECT_THEME_CONFIG.defaultSet;
 
-    // Get the current project name
+        ensureCommonUIStyle();
+        ensureSettingsBtn();
+        waitForMessageContainer();
+        observeForNewChat();
+        startGlobalProjectElementObserver();
+    }
+    init();
+
+    // ---- Common UI Style ----
+    function ensureCommonUIStyle() {
+        if (document.getElementById('cpta-settings-common-style')) return;
+        const style = document.createElement('style');
+        style.id = 'cpta-settings-common-style';
+        style.textContent = `
+          #cpta-id-settings-btn {
+              transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+          }
+          #cpta-id-settings-btn:hover {
+              background: var(--interactive-bg-secondary-hover, #e3e3e3) !important;
+              border-color: var(--border-default, #888) !important;
+              box-shadow: 0 2px 8px var(--border-default, #3336) !important;
+          }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // ---- Settings Button ----
+    function ensureSettingsBtn() {
+        if (document.getElementById('cpta-id-settings-btn')) return;
+        const btn = document.createElement('button');
+        btn.id = 'cpta-id-settings-btn';
+        btn.textContent = '⚙️';
+        btn.title = 'Settings (ChatGPT Project Theme Automator)';
+        Object.assign(btn.style, {
+            position: 'fixed',
+            top: '10px',
+            right: '320px',
+            zIndex: 99999,
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: 'var(--bg-primary, #fff)',
+            border: '1px solid var(--border-default, #ccc)',
+            fontSize: '18px',
+            cursor: 'pointer',
+            boxShadow: 'var(--drop-shadow-xs, 0 1px 1px #0000000d)'
+        });
+        document.body.appendChild(btn);
+
+        const settingsModal = setupSettingsModal({
+            modalId: 'cpta-settings-modal',
+            titleText: 'ChatGPT Project Theme Automator Settings',
+            onSave: async (cfg) => {
+                await saveConfig(CONFIG_KEY, cfg);
+                CHATGPT_PROJECT_THEME_CONFIG = cfg;
+                THEME_SETS = cfg.themeSets;
+                DEFAULT_SET = cfg.defaultSet;
+                updateTheme();
+            },
+            getCurrentConfig: () => Promise.resolve(CHATGPT_PROJECT_THEME_CONFIG),
+            anchorBtn: document.getElementById('cpta-id-settings-btn')
+        });
+        document.getElementById('cpta-id-settings-btn').onclick = () => { settingsModal.open(); };
+    }
+
+    // Modal Functions
+    function setupSettingsModal({ modalId, titleText, onSave, getCurrentConfig, anchorBtn }) {
+        let modalOverlay = document.getElementById(modalId);
+        if (modalOverlay) return modalOverlay;
+
+        // styles for hover (Prevent duplication with ID)
+        if (!document.getElementById('cpta-modal-btn-hover-style')) {
+            const style = document.createElement('style');
+            style.id = 'cpta-modal-btn-hover-style';
+            style.textContent = `
+            #${modalId} button:hover {
+                background: var(--interactive-bg-tertiary-hover) !important;
+                border-color: var(--border-default) !important;
+            }
+        `;
+            document.head.appendChild(style);
+        }
+
+        modalOverlay = document.createElement('div');
+        modalOverlay.id = modalId;
+        modalOverlay.style.display = 'none';
+        modalOverlay.style.position = 'fixed';
+        modalOverlay.style.zIndex = '2147483648';
+        modalOverlay.style.left = '0';
+        modalOverlay.style.top = '0';
+        modalOverlay.style.width = '100vw';
+        modalOverlay.style.height = '100vh';
+        modalOverlay.style.background = 'none';
+        modalOverlay.style.pointerEvents = 'auto';
+
+        // modalBox
+        const modalBox = document.createElement('div');
+        modalBox.style.position = 'absolute';
+        modalBox.style.width = MODAL_WIDTH + 'px';
+        modalBox.style.padding = MODAL_PADDING + 'px';
+        modalBox.style.borderRadius = `var(--radius-lg, ${MODAL_RADIUS}px)`;
+        modalBox.style.background = 'var(--main-surface-primary)';
+        modalBox.style.color = 'var(--text-primary)';
+        modalBox.style.border = '1px solid var(--border-default)';
+        modalBox.style.boxShadow = 'var(--drop-shadow-lg, 0 4px 16px #00000026)';
+        // left/topはopenModal時に決定
+
+        // Title
+        const modalTitle = document.createElement('h5');
+        modalTitle.innerText = titleText;
+        modalTitle.style.marginTop = '0';
+        modalTitle.style.marginBottom = MODAL_TITLE_MARGIN_BOTTOM + 'px';
+
+        // Textarea
+        const textarea = document.createElement('textarea');
+        textarea.style.width = '100%';
+        textarea.style.height = MODAL_TEXTAREA_HEIGHT + 'px';
+        textarea.style.boxSizing = 'border-box';
+        textarea.style.fontFamily = 'monospace';
+        textarea.style.fontSize = '13px';
+        textarea.style.marginBottom = '0';
+        textarea.style.border = '1px solid var(--border-default)';
+        textarea.style.background = 'var(--bg-primary)';
+        textarea.style.color = 'var(--text-primary)';
+
+        // error messages
+        const msgDiv = document.createElement('div');
+        msgDiv.style.color = 'var(--text-danger,#f33)';
+        msgDiv.style.marginTop = '2px';
+        msgDiv.style.minHeight = '4px';
+
+        // btnGroup
+        const btnGroup = document.createElement('div');
+        btnGroup.style.display = 'flex';
+        btnGroup.style.flexWrap = 'wrap';
+        btnGroup.style.justifyContent = 'flex-end';
+        btnGroup.style.gap = MODAL_BTN_GROUP_GAP + 'px';
+        btnGroup.style.marginTop = '8px';
+
+        // btnExport
+        const btnExport = document.createElement('button');
+        btnExport.type = 'button';
+        btnExport.innerText = 'Export';
+        Object.assign(btnExport.style, {
+            background: 'var(--interactive-bg-tertiary-default)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border-default)',
+            borderRadius: `var(--radius-md, ${MODAL_BTN_RADIUS}px)`,
+            padding: MODAL_BTN_PADDING,
+            fontSize: MODAL_BTN_FONT_SIZE + 'px',
+            cursor: 'pointer',
+            transition: 'background 0.12s'
+        });
+
+        // btnImport
+        const btnImport = document.createElement('button');
+        btnImport.type = 'button';
+        btnImport.innerText = 'Import';
+        Object.assign(btnImport.style, {
+            background: 'var(--interactive-bg-tertiary-default)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border-default)',
+            borderRadius: `var(--radius-md, ${MODAL_BTN_RADIUS}px)`,
+            padding: MODAL_BTN_PADDING,
+            fontSize: MODAL_BTN_FONT_SIZE + 'px',
+            cursor: 'pointer',
+            transition: 'background 0.12s'
+        });
+
+        // btnSave
+        const btnSave = document.createElement('button');
+        btnSave.type = 'button';
+        btnSave.innerText = 'Save';
+        btnSave.style.background = 'var(--interactive-bg-tertiary-default)';
+        btnSave.style.color = 'var(--text-primary)';
+        btnSave.style.border = '1px solid var(--border-default)';
+        btnSave.style.borderRadius = `var(--radius-md, ${MODAL_BTN_RADIUS}px)`;
+        btnSave.style.padding = MODAL_BTN_PADDING;
+        btnSave.style.fontSize = MODAL_BTN_FONT_SIZE + 'px';
+        btnSave.style.cursor = 'pointer';
+        btnSave.style.transition = 'background 0.12s';
+
+        // btnCancel
+        const btnCancel = document.createElement('button');
+        btnCancel.type = 'button';
+        btnCancel.innerText = 'Cancel';
+        btnCancel.style.background = 'var(--interactive-bg-tertiary-default)';
+        btnCancel.style.color = 'var(--text-primary)';
+        btnCancel.style.border = '1px solid var(--border-default)';
+        btnCancel.style.borderRadius = `var(--radius-md, ${MODAL_BTN_RADIUS}px)`;
+        btnCancel.style.padding = MODAL_BTN_PADDING;
+        btnCancel.style.fontSize = MODAL_BTN_FONT_SIZE + 'px';
+        btnCancel.style.cursor = 'pointer';
+        btnCancel.style.transition = 'background 0.12s';
+
+        btnGroup.append(btnExport, btnImport, btnSave, btnCancel);
+        modalBox.append(modalTitle, textarea, btnGroup, msgDiv);
+        modalOverlay.appendChild(modalBox);
+        document.body.appendChild(modalOverlay);
+
+        // Click to close
+        function closeModal() { modalOverlay.style.display = 'none'; }
+
+        // Export (Event Listener)
+        btnExport.addEventListener('click', async () => {
+            try {
+                const config = await getCurrentConfig();
+                const jsonString = JSON.stringify(config, null, 2);
+                const filename = 'cpta_config.json';
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                msgDiv.textContent = 'Export successful.';
+                msgDiv.style.color = 'var(--text-accent, #66b5ff)';
+            } catch (e) {
+                msgDiv.textContent = 'Export failed: ' + e.message;
+                msgDiv.style.color = 'var(--text-danger,#f33)';
+            }
+        });
+
+        // Import (Event Listener)
+        btnImport.addEventListener('click', () => {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'application/json';
+            fileInput.style.display = 'none';
+            document.body.appendChild(fileInput);
+
+            fileInput.addEventListener('change', async (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        try {
+                            const importedConfig = JSON.parse(e.target.result);
+                            textarea.value = JSON.stringify(importedConfig, null, 2);
+                            msgDiv.textContent = 'Import successful. Click "Save" to apply the themes.';
+                            msgDiv.style.color = 'var(--text-accent, #66b5ff)';
+                        } catch (err) {
+                            msgDiv.textContent = 'Import failed: ' + err.message;
+                            msgDiv.style.color = 'var(--text-danger,#f33)';
+                        } finally {
+                            document.body.removeChild(fileInput);
+                        }
+                    };
+                    reader.readAsText(file);
+                } else {
+                    document.body.removeChild(fileInput);
+                }
+            });
+
+            fileInput.click();
+        });
+
+        // Save (Event Listener)
+        btnSave.addEventListener('click', async () => {
+            try {
+                const obj = JSON.parse(textarea.value);
+                await onSave(obj);
+                closeModal();
+            } catch (e) {
+                msgDiv.textContent = 'JSON parse error: ' + e.message;
+                msgDiv.style.color = 'var(--text-danger,#f33)';
+            }
+        });
+
+        // Cancel (Event Listener)
+        btnCancel.addEventListener('click', closeModal);
+        modalOverlay.addEventListener('mousedown', e => {
+            if (e.target === modalOverlay) closeModal();
+        });
+
+        // --- Put it under the button ---
+        async function openModal() {
+            let cfg = await getCurrentConfig();
+            textarea.value = JSON.stringify(cfg, null, 2);
+            msgDiv.textContent = '';
+            if (anchorBtn && anchorBtn.getBoundingClientRect) {
+                const btnRect = anchorBtn.getBoundingClientRect();
+                const margin = 8;
+                let left = btnRect.left;
+                let top = btnRect.bottom + 4;
+                // Prevents right edge from protruding
+                if (left + MODAL_WIDTH > window.innerWidth - margin) {
+                    left = window.innerWidth - MODAL_WIDTH - margin;
+                }
+                left = Math.max(left, margin);
+                modalBox.style.left = left + 'px';
+                modalBox.style.top = top + 'px';
+                modalBox.style.transform = '';
+            } else {
+                modalBox.style.left = '50%';
+                modalBox.style.top = '120px';
+                modalBox.style.transform = 'translateX(-50%)';
+            }
+            modalOverlay.style.display = 'block';
+        }
+        modalOverlay.open = openModal;
+        modalOverlay.close = closeModal;
+        return modalOverlay;
+    }
+
+    // Detect the disappearance of the button with MutationObserver and revive it
+    const cptaBtnObserver = new MutationObserver(ensureSettingsBtn);
+    cptaBtnObserver.observe(document.body, { childList: true, subtree: true });
+
+    // ======================
+    // functions for themes
+    // ======================
+
     const getProjectName = () =>
     document.querySelector('a.truncate[href^="/g/"]')?.textContent.trim()
     || document.title.trim();
@@ -115,33 +431,35 @@
     }
 
     // Get theme set (priority: exact match → RegExp match → default)
-    const getThemeSet = (() => {
+    function getThemeSet() {
         const map = new Map();
         const regexArr = [];
-        for (const set of THEME_SETS) {
+        for (const set of THEME_SETS ?? []) {
             for (const proj of set.projects) {
-                if (typeof proj === 'string') map.set(proj, set);
-                else if (proj instanceof RegExp) regexArr.push({ pattern: proj, set });
+                if (typeof proj === 'string') {
+                    if (/^\/.*\/[gimsuy]*$/.test(proj)) {
+                        const lastSlash = proj.lastIndexOf('/');
+                        const pattern = proj.slice(1, lastSlash);
+                        const flags = proj.slice(lastSlash + 1);
+                        try {
+                            regexArr.push({ pattern: new RegExp(pattern, flags), set });
+                        } catch (e) { }
+                    } else {
+                        map.set(proj, set);
+                    }
+                } else if (proj instanceof RegExp) {
+                    regexArr.push({ pattern: proj, set });
+                }
             }
         }
-        return () => {
-            const name = getProjectName();
-            if (map.has(name)) return map.get(name);
-            const regexHit = regexArr.find(r => r.pattern.test(name));
-            return regexHit ? regexHit.set : DEFAULT_SET;
-        };
-    })();
+        const name = getProjectName();
+        if (map.has(name)) return map.get(name);
+        const regexHit = regexArr.find(r => r.pattern.test(name));
+        return regexHit ? regexHit.set : DEFAULT_SET;
+    }
 
     // Generate custom theme CSS
     const createThemeCSS = (userColor, assistantColor) => `
-        /*
-          Change text color for each element in the assistant's output.
-          - In ChatGPT, only the assistant's side renders Markdown as HTML elements,
-            so specify each selector (h1-h6, p, ul/ol, li, strong, em, blockquote, table, etc.).
-          - We don't want to apply color to code blocks (pre, code) or math (like katex),
-            so selectors are restricted to exclude those elements.
-          - If more elements need to be styled, simply add them to this list for easy maintenance and extension.
-        */
         div[data-message-author-role="assistant"] .markdown p,
         div[data-message-author-role="assistant"] .markdown h1,
         div[data-message-author-role="assistant"] .markdown h2,
@@ -161,20 +479,9 @@
         div[data-message-author-role="assistant"] .markdown td {
             color: ${assistantColor} !important;
         }
-        /*
-          Change text color for user messages.
-          - By ChatGPT's specification, user messages are always displayed as plain text (no Markdown or HTML markup).
-          - Target only .whitespace-pre-wrap (there are no other decorative elements).
-        */
         div[data-message-author-role="user"] .whitespace-pre-wrap {
             color: ${userColor} !important;
         }
-
-        /*
-          Restore default color for fixed UI elements (e.g., text input area)
-          - To prevent the theme color from affecting UI parts, explicitly specify 'inherit'.
-          - #fixedTextUIRoot: fixed UI parts such as ChatGPT's input UI.
-        */
         #fixedTextUIRoot, #fixedTextUIRoot * {
             color: inherit !important;
         }
@@ -184,6 +491,7 @@
     function applyTheme(userColor, assistantColor) {
         if (!themeStyleElem) {
             themeStyleElem = document.createElement('style');
+            themeStyleElem.id = 'cpta-theme-style';
             document.head.appendChild(themeStyleElem);
         }
         const themeId = `${userColor}_${assistantColor}`;
@@ -195,13 +503,6 @@
         }
         themeStyleElem.textContent = createThemeCSS(userColor, assistantColor);
         appliedThemeId = themeId;
-    }
-    // Remove theme
-    function removeTheme() {
-        if (themeStyleElem) {
-            themeStyleElem.textContent = '';
-            appliedThemeId = null;
-        }
     }
 
     // Inject icon and display name
@@ -379,12 +680,20 @@
         const project = getProjectName();
         const userColor = userConf.textcolor ?? '';
         const assistantColor = assistantConf.textcolor ?? '';
-        if (project !== lastProject) {
-            applyTheme(userColor, assistantColor);
-        }
-        lastProject = project;
 
-        // Redraw only the differences
+        // --- Always reapply CSS when color or project name changes ---
+        if (
+            project !== lastProject ||
+            userColor !== lastUserColor ||
+            assistantColor !== lastAssistantColor
+        ) {
+            applyTheme(userColor, assistantColor);
+            lastProject = project;
+            lastUserColor = userColor;
+            lastAssistantColor = assistantColor;
+        }
+
+        // --- When the name, icon, etc. change, the bubble is redrawn using the cache key. ---
         const userCacheKey = JSON.stringify(userConf);
         const assistantCacheKey = JSON.stringify(assistantConf);
 
@@ -400,7 +709,7 @@
     // ---- Global MutationObserver for project name elements ----
     let globalProjectObserver = null;
     function startGlobalProjectElementObserver() {
-        if (globalProjectObserver) return; // Only start once
+        if (globalProjectObserver) return;
         globalProjectObserver = new MutationObserver(() => {
             // 1. Watch for a.truncate (project name anchor)
             const anchor = document.querySelector('a.truncate[href^="/g/"]');
@@ -466,19 +775,6 @@
         titleElement.hasThemeObserver = true;
 
         // console.log("setupTitleObserver: New observer for title");
-    }
-
-    // ---- Initialization ----
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            waitForMessageContainer();
-            observeForNewChat();
-            startGlobalProjectElementObserver();
-        });
-    } else {
-        waitForMessageContainer();
-        observeForNewChat();
-        startGlobalProjectElementObserver();
     }
 
 })();
