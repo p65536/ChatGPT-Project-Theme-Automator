@@ -157,9 +157,17 @@ javascript:(async()=>{function e(s){return s.replace(/\\/g,"\\\\").replace(/\"/g
 
 (Example dialogs are shown below for Firefox.)
 
-![Bookmark registration dialog](./docs/cpta_a001.png)
-![Example: name as ConvSVG](./docs/cpta_a002.png)
-![Bookmark added](./docs/cpta_a004.png)
+  #### Add to bookmark
+
+  ![Bookmark registration dialog](./docs/cpta_a001.png)
+
+  #### Save with any name
+
+  ![Example: name as ConvSVG](./docs/cpta_a002.png)
+
+  #### Added to bookmark
+
+  ![Bookmark added](./docs/cpta_a004.png)
 
 ### 3. Usage
 
