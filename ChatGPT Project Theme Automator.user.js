@@ -13,13 +13,11 @@
 (() => {
     'use strict';
 
-    // ---- Icon settings ----
-    const ICON_SIZE = 64;
-    const ICON_MARGIN = 16;
-    const ICON_OFFSET = ICON_SIZE + ICON_MARGIN;
-
     // ---- Default Settings ----
     const DEFAULT_THEME_CONFIG = {
+        options: {
+            icon_size: 64
+        },
         themeSets: [
             {
                 projects: ['project1'],
@@ -79,6 +77,17 @@
         await GM_setValue(key, JSON.stringify(obj));
     }
 
+    // ---- Icon settings ----
+    let ICON_SIZE = 64;
+    const ICON_MARGIN = 12;
+
+    function getIconSizeFromConfig(cfg) {
+        if (cfg && cfg.options && typeof cfg.options.icon_size === "number") {
+            return cfg.options.icon_size;
+        }
+        return 64;
+    }
+
     // ---- Cache settings ----
     let CHATGPT_PROJECT_THEME_CONFIG, THEME_SETS, DEFAULT_SET;
 
@@ -99,6 +108,7 @@
 
     async function init() {
         CHATGPT_PROJECT_THEME_CONFIG = await loadConfig(CONFIG_KEY, DEFAULT_THEME_CONFIG);
+        ICON_SIZE = getIconSizeFromConfig(CHATGPT_PROJECT_THEME_CONFIG);
         THEME_SETS = CHATGPT_PROJECT_THEME_CONFIG.themeSets;
         DEFAULT_SET = CHATGPT_PROJECT_THEME_CONFIG.defaultSet;
 
@@ -157,6 +167,7 @@
             onSave: async (cfg) => {
                 await saveConfig(CONFIG_KEY, cfg);
                 CHATGPT_PROJECT_THEME_CONFIG = cfg;
+                ICON_SIZE = getIconSizeFromConfig(cfg);
                 THEME_SETS = cfg.themeSets;
                 DEFAULT_SET = cfg.defaultSet;
                 updateTheme();
@@ -528,7 +539,6 @@
 
         const container = document.createElement('div');
         container.className = 'side-avatar-container';
-        container.style[role === 'user' ? 'right' : 'left'] = `-${ICON_OFFSET}px`;
 
         const iconWrapper = document.createElement('span');
         iconWrapper.className = 'side-avatar-icon';
@@ -548,6 +558,16 @@
         nameDiv.className = 'side-avatar-name';
         nameDiv.textContent = set.name ?? '';
 
+        if (set.textcolor) {
+            nameDiv.style.color = set.textcolor;
+        } else {
+            if (role === 'user') {
+                nameDiv.style.color = 'var(--text-secondary, #5d5d5d)';
+            } else if (role === 'assistant') {
+                nameDiv.style.color = 'var(--text-secondary, #5d5d5d)';
+            }
+        }
+
         container.append(iconWrapper, nameDiv);
         msgWrapper.appendChild(container);
 
@@ -555,32 +575,78 @@
         msgElem.__avatarCacheKey = cacheKey;
     };
 
-    // Inject icon and layout CSS (only once)
-    (() => {
-        const avatarStyle = document.createElement('style');
+    function injectAvatarStyle() {
+        const styleId = 'cpta-avatar-style';
+        let avatarStyle = document.getElementById(styleId);
+        if (avatarStyle) avatarStyle.remove();
+
+        avatarStyle = document.createElement('style');
+        avatarStyle.id = styleId;
+
         avatarStyle.textContent = `
-        .chat-wrapper { position: relative; }
+
+        /*--- borders for debugging ---*/
+        //.chat-wrapper { position: relative; border: 1px dashed orange;}
+        //.side-avatar-container { border: 1px solid red; }
+        //.side-avatar-icon, .side-avatar-icon svg { border: 1px solid blue; }
+        //.side-avatar-name { border: 1px solid green; }
+        /*--- borders for debugging ---*/
+
         .side-avatar-container {
             position: absolute;
             top: 0;
-            display: flex; flex-direction: column; align-items: center;
-            width: ${ICON_SIZE}px; pointer-events: none; z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: ${ICON_SIZE}px;
+            pointer-events: none;
+            z-index: 10;
+            white-space: normal;
+            word-break: break-word;
         }
-        /* Use the same class for both SVG and img */
+
         .side-avatar-icon,
         .side-avatar-icon svg {
-            width: ${ICON_SIZE}px; height: ${ICON_SIZE}px;
+            width: ${ICON_SIZE}px;
+            height: ${ICON_SIZE}px;
             border-radius: 50%;
             display: block;
             box-shadow: 0 0 6px rgba(0,0,0,0.2);
             object-fit: cover;
         }
+
         .side-avatar-name {
-            font-size: 0.75rem; text-align: center; color: #888; margin-top: 4px;
+            font-size: 0.75rem;
+            text-align: center;
+            margin-top: 4px;
+            width: 100%;
+        }
+
+        .chat-wrapper[data-message-author-role="user"] .side-avatar-container {
+            right: calc(-${ICON_SIZE}px - ${ICON_MARGIN}px);
+        }
+
+        .chat-wrapper[data-message-author-role="assistant"] .side-avatar-container {
+            left: calc(-${ICON_SIZE}px - ${ICON_MARGIN}px);
+        }
+
+        /*
+         * Ensure message content doesn't overlap with the custom avatar.
+         * This adds padding to the message content to reserve space for the avatar.
+         * While it might not be strictly necessary under current UI conditions,
+         * it acts as a safeguard against potential overlaps due to future UI changes or long content.
+         */
+        div[data-message-author-role="user"] .markdown,
+        div[data-message-author-role="user"] .whitespace-pre-wrap {
+            padding-right: calc(${ICON_SIZE}px + ${ICON_MARGIN}px);
+        }
+
+        div[data-message-author-role="assistant"] .markdown {
+            padding-left: calc(${ICON_SIZE}px + ${ICON_MARGIN}px);
         }
     `;
         document.head.appendChild(avatarStyle);
-    })();
+    }
 
     // MutationObserver for messages
     function setupMessageObserver(container) {
@@ -704,6 +770,9 @@
                 injectAvatar(msgElem);
             }
         });
+
+        // update icon
+        injectAvatarStyle();
     }
 
     // ---- Global MutationObserver for project name elements ----

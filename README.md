@@ -85,28 +85,39 @@ See the next section for JSON format details.
 
 ```json
 {
-  "themeSets": [
-    {
-      "projects": ["project1", "project2"],
-      "user": { "name": "user name", "textcolor": "#ffefd5", "icon": "(see sample)" },
-      "assistant": { "name": "assistant name", "textcolor": "#1e90ff", "icon": "(see sample)" }
+    "options": {
+      "icon_size": 64
     },
-    {
-      "projects": ["project3", "/Dungeon Master/"],
-      "user": { "name": "Player", "textcolor": "#ffefd5", "icon": "(see sample)" },
-      "assistant": { "name": "Dungeon Master", "textcolor": "#1e90ff", "icon": "(see sample)" }
+    "themeSets": [
+        {
+            "projects": ["project1","project2"],
+            "user": {"name": "user name", "textcolor": "#ffefd5", "icon": "(see sample)"},
+            "assistant": {"name": "assistant name", "textcolor": "#1e90ff", "icon": "(see sample)"}
+        },
+        {
+            "projects": ["project3","/Dungeon Master/"],
+            "user": {"name": "Player", "textcolor": "#ffefd5", "icon": "(see sample)"},
+            "assistant": {"name": "Dungeon Master", "textcolor": "#1e90ff", "icon": "(see sample)"}
+        }
+    ],
+    "defaultSet": {
+        "user": {"name": "You", "textcolor": "#32cd32", "icon": "(see sample)"},
+        "assistant": {"name": "ChatGPT", "textcolor": "#ff9900", "icon": "(see sample)"}
     }
-  ],
-  "defaultSet": {
-    "user": { "name": "You", "textcolor": "#32cd32", "icon": "(see sample)" },
-    "assistant": { "name": "ChatGPT", "textcolor": "#ff9900", "icon": "(see sample)" }
-  }
 }
 ````
 
 **Explanation:**
 
-1. ### `themeSets`
+1. ### `options`
+   
+   | Property      | Description                                                                |
+   | ------------- | -------------------------------------------------------------------------- |
+   | `icon_size`   | Size of the avatar icons. Recommended: `64` (default), `96`, or `128`.     |
+   
+   (For icon size previews, see [Icon Size](#icon-size) below.)
+
+2. ### `themeSets`
 
    Each `{ ... }` block defines a theme, which can be applied to multiple projects.
    You can add as many themes as you like.
@@ -130,12 +141,12 @@ See the next section for JSON format details.
      | Property    | Description                                                                                                                                                                                                                                                                                       |
      | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
      | `name`      | Display name                                                                                                                                                                                                                                                                                      |
-     | `textcolor` | Text color (CSS color, e.g. `#b0c4de`)                                                                                                                                                                                                                                                            |
+     | `textcolor` | Text color (CSS color, e.g. `#b0c4de`). **This color is applied both to the message text and the avatar name.**                                                                                                                                                                        |
      | `icon`      | Icon: supports URL (e.g. `https://...`), Base64 image, or **SVG code** (such as from [Google Fonts](https://fonts.google.com/icons)).<br>**If you use SVG code, double quotes must be escaped as `\"`!**<br>To make this easier, see the [SVG Escape Bookmarklet](#svg-escape-bookmarklet) below. |
 
    Omitted properties inherit from the `defaultSet`.
 
-2. ### `defaultSet`
+3. ### `defaultSet`
 
    The fallback theme, used when no other theme matches.
    `user` and `assistant` can each specify `name`, `textcolor`, and `icon`.
@@ -200,27 +211,35 @@ Icons in the sample use [Google Fonts](https://fonts.google.com/icons) SVGs.
 
 ## Icon Size
 
-You can adjust the icon size by changing `ICON_SIZE` in the script.
+You can adjust the icon size by changing `"icon_size"` in the `"options"` section of your configuration JSON.
 
-```js
-const ICON_SIZE = 64;
+```json
+"options": {
+  "icon_size": 64
+}
 ```
 
 * 64 ... Default size (recommended)
 * 96 ... For larger character icons
 * 128 ... Larger than this may be distracting
 
-### ICON\_SIZE = 64
+### "icon_size": 64
+```js
+"icon_size": 64
+```
+![ICON_SIZE = 64](./docs/cpta_iconsize_64.png)
 
-![ICON\_SIZE = 64](./docs/cpta_iconsize_64.png)
+### "icon_size": 96
+```js
+"icon_size": 96
+```
+![ICON_SIZE = 96](./docs/cpta_iconsize_96.png)
 
-### ICON\_SIZE = 96
-
-![ICON\_SIZE = 96](./docs/cpta_iconsize_96.png)
-
-### ICON\_SIZE = 128
-
-![ICON\_SIZE = 128](./docs/cpta_iconsize_128.png)
+### "icon_size": 128
+```js
+"icon_size": 128
+```
+![ICON_SIZE = 128](./docs/cpta_iconsize_128.png)
 
 ---
 

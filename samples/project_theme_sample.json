@@ -1,4 +1,7 @@
 {
+  "options": {
+    "icon_size": 64
+  },
   "themeSets": [
     {
       "projects": ["CodingProject", "/Tampermonkey Scripts/"],
