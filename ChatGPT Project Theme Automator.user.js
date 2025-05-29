@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ChatGPT Project Theme Automator
 // @namespace    https://github.com/p65536
-// @version      1.0.0
+// @version      1.0.1
 // @license      MIT
 // @description  Automatically applies a theme based on the project name (changes user/assistant names, text color, icon, bubble style, window background, input area style, standing images, etc.)
 // @author       p65536
@@ -26,34 +26,38 @@
         },
         themeSets: [
             {
-                projects: [/project1/],
+                projects: ["/project1/"],
                 user: {
-                    standingImage: "https://via.placeholder.com/200x600/ff0000/ffffff?text=User+Stand" // Example URL
+                    name: null,
+                    icon: null,
+                    textcolor: null,
+                    font: null,
+                    bubbleBgColor: null,
+                    bubblePadding: null,
+                    bubbleBorderRadius: null,
+                    bubbleMaxWidth: null,
+                    standingImage: null
                 },
                 assistant: {
-                    textcolor: '#FF9900',
-                    bubblePadding: "10px 14px",
-                    bubbleBorderRadius: "16px",
-                    standingImage: "https://via.placeholder.com/200x600/0000ff/ffffff?text=Asst+Stand" // Example URL
+                    name: null,
+                    icon: null,
+                    textcolor: null,
+                    font: null,
+                    bubbleBgColor: null,
+                    bubblePadding: null,
+                    bubbleBorderRadius: null,
+                    bubbleMaxWidth: null,
+                    standingImage: null
                 },
-                windowBgColor: "#282c34",
-                windowBgImage: "url('https://source.unsplash.com/random/1920x1080?technology')",
-                windowBgAttachment: "fixed",
-                inputAreaBgColor: "rgba(0,0,0,0.2)",
-                inputAreaTextColor: "#FFFFFF",
-                inputAreaPlaceholderColor: "#AAAAAA"
-            },
-            {
-                projects: [/project2/],
-                user: {
-                    name: 'User',
-                    icon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#e3e3e3"><path d="M0 0h24v24H0V0z" fill="none"/><circle cx="15.5" cy="9.5" r="1.5"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M12 16c-1.48 0-2.75-.81-3.45-2H6.88c.8 2.05 2.79 3.5 5.12 3.5s4.32-1.45 5.12-3.5h-1.67c-.7 1.19-1.97 2-3.45 2zm-.01-14C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg>',
-                    textcolor: '#f0e68c'
-                },
-                assistant: {
-                    name: 'CPU',
-                    icon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#e3e3e3"><path d="M0 0h24v24H0V0z" fill="none"/><circle cx="15.5" cy="9.5" r="1.5"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M12 14c-2.33 0-4.32 1.45-5.12 3.5h1.67c.69-1.19 1.97-2 3.45-2s2.75.81 3.45 2h1.67c-.8-2.05-2.79-3.5-5.12-3.5zm-.01-12C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg>'
-                }
+                windowBgColor: null,
+                windowBgImage: null,
+                windowBgSize: null,
+                windowBgPosition: null,
+                windowBgRepeat: null,
+                windowBgAttachment: null,
+                inputAreaBgColor: null,
+                inputAreaTextColor: null,
+                inputAreaPlaceholderColor: null
             }
         ],
         defaultSet: {
