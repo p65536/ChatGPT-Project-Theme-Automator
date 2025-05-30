@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ChatGPT Project Theme Automator
 // @namespace    https://github.com/p65536
-// @version      1.0.1
+// @version      1.0.2
 // @license      MIT
 // @description  Automatically applies a theme based on the project name (changes user/assistant names, text color, icon, bubble style, window background, input area style, standing images, etc.)
 // @author       p65536
@@ -98,7 +98,7 @@
     // ---- Global Constants ----
     const CONFIG_KEY = 'cpta_config';
     const ICON_MARGIN = 16;
-    const STANDING_IMAGE_Z_INDEX = 5;
+    const STANDING_IMAGE_Z_INDEX = 'auto';
     const MAX_STANDING_IMAGES_RETRIES = 10;
     const STANDING_IMAGES_RETRY_INTERVAL = 250;
     // ---- Common Settings for Modal Functions ----
@@ -656,7 +656,7 @@
         .side-avatar-container {
             position: absolute; top: 0; display: flex; flex-direction: column; align-items: center;
             width: ${state.CPTA_CONFIG.options.icon_size}px;
-            pointer-events: none; z-index: 10; white-space: normal; word-break: break-word;
+            pointer-events: none; white-space: normal; word-break: break-word;
         }
         .side-avatar-icon, .side-avatar-icon svg {
             width: ${state.CPTA_CONFIG.options.icon_size}px; height: ${state.CPTA_CONFIG.options.icon_size}px;
