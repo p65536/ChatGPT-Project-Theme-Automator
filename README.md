@@ -187,8 +187,9 @@ javascript:(async()=>{function e(s){return s.replace(/\\/g,"\\\\").replace(/\"/g
 
 ## Limitations & Notes
 
-* **There is no auto-update feature.**  
-  When a new version is released, you need to manually update the script.
+* This script does not include a built-in auto-update mechanism. However, it is also published on [Greasy Fork](https://greasyfork.org/ja/scripts/537656-chatgpt-project-theme-automator).  
+  If you want the script to update automatically, please install it from Greasy Fork.  
+  If you prefer to manage updates manually, simply replace the script file yourself when a new version is released.
 * Major UI changes on ChatGPT.com may break compatibility.
 * Tested on Firefox. Should also work on Chromium-based browsers, but not guaranteed.
 
@@ -223,7 +224,6 @@ MIT License
 ### Ideas Under Consideration (not planned)
 
 - GUI for settings (editing JSON is sufficient for most users)
-- Auto-update support (manual version control is more transparent)
 - Cloud sync for settings (local export/import is enough)
 - Theme application for sidebar (seems unnecessary)
 - Change input area font (is this needed?)

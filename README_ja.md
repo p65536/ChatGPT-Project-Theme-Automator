@@ -8,8 +8,8 @@
 
 [![Download](https://img.shields.io/badge/Download-ChatGPT_Project_Theme_Automator.user.js-blue?style=flat-square\&logo=download)](https://github.com/p65536/ChatGPT-Project-Theme-Automator/raw/main/ChatGPT%20Project%20Theme%20Automator.user.js)
 
-![version](https://img.shields.io/badge/version-1.0.1-blue)  
-最終更新日: **2025年5月30日**  
+![version](https://img.shields.io/badge/version-1.0.2-blue)  
+最終更新日: **2025年5月31日**  
 [変更履歴はこちら](./CHANGELOG_ja.md)
 
 [English README is here.](./README.md)
@@ -175,8 +175,9 @@ javascript:(async()=>{function e(s){return s.replace(/\\/g,"\\\\").replace(/"/g,
 
 ## 注意事項・制限
 
-* **自動アップデート機能はありません。**
-  新バージョンが公開された際は、手動でスクリプトを差し替えてください。
+* スクリプト自体に自動アップデート機能はありませんが、[Greasy Fork](https://greasyfork.org/ja/scripts/537656-chatgpt-project-theme-automator) でもスクリプトを公開しています。  
+  スクリプトを自動更新したい方は、 Greasy Fork からインストールしてください。  
+  スクリプトを手動更新したい方は、手動でスクリプトを差し替えてください。  
 * ChatGPT側のUIが大幅に変更された場合、動作しなくなる可能性があります。
 * Firefoxで動作確認しています。Chrome系ブラウザでも多分動きますが未検証です。
 
@@ -210,7 +211,7 @@ MIT License
 ### 検討はしているが、現状では必要性を感じていない項目
 
 * 設定画面のGUI化（JSON編集でよくね？）
-* スクリプトの自動更新（安定版をユーザーが選択できる方がよい）
+* スクリプトの自動更新（自動更新したい方は [Greasy Fork](https://greasyfork.org/ja/scripts/537656-chatgpt-project-theme-automator) からインストールしてください）
 * クラウド経由での設定同期（export/importによるローカル管理で十分）
 * サイドバーへのテーマ適用（要らないよな？）
 * 入力エリアのフォント変更（要るか？）
