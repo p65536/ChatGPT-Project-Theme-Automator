@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ChatGPT Project Theme Automator
 // @namespace    https://github.com/p65536
-// @version      1.0.2
+// @version      1.0.3
 // @license      MIT
 // @description  Automatically applies a theme based on the project name (changes user/assistant names, text color, icon, bubble style, window background, input area style, standing images, etc.)
 // @author       p65536
@@ -335,8 +335,7 @@
                     if (/^\/.*\/[gimsuy]*$/.test(proj)) {
                         const lastSlash = proj.lastIndexOf('/');
                         const pattern = proj.slice(1, lastSlash);
-                        let flags = proj.slice(lastSlash + 1);
-                        if (!flags.includes('i')) flags += 'i'; // ←ここでi自動付与
+                        const flags = proj.slice(lastSlash + 1);
                         try {
                             regexArr.push({ pattern: new RegExp(pattern, flags), set });
                         } catch (e) { /* ignore invalid regex strings in config */ }
@@ -344,9 +343,7 @@
                         throw new Error(`[ThemeAutomator] projects entry must be a /pattern/flags string: ${proj}`);
                     }
                 } else if (proj instanceof RegExp) {
-                    let flags = proj.flags;
-                    if (!flags.includes('i')) flags += 'i'; // ←ここでi自動付与
-                    regexArr.push({ pattern: new RegExp(proj.source, flags), set });
+                    regexArr.push({ pattern: new RegExp(proj.source, proj.flags), set });
                 }
             }
         }
