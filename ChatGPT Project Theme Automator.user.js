@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         ChatGPT Project Theme Automator
 // @namespace    https://github.com/p65536
-// @version      1.0.3
+// @version      1.0.4
 // @license      MIT
 // @description  Automatically applies a theme based on the project name (changes user/assistant names, text color, icon, bubble style, window background, input area style, standing images, etc.)
+// @icon         https://chatgpt.com/favicon.ico
 // @author       p65536
 // @match        https://chatgpt.com/*
 // @grant        GM_setValue
@@ -114,7 +115,7 @@
 
     // ---- CSS Selectors  ----
     const SELECTORS = {
-        SIDEBAR_WIDTH_TARGET: '.bg-token-sidebar-surface-primary[style*="width"]',
+        SIDEBAR_WIDTH_TARGET: 'div[id="stage-slideover-sidebar"]',
         CHAT_CONTENT_MAX_WIDTH: 'div[class*="--thread-content-max-width"]',
         CHAT_MAIN_AREA_BG_TARGET: 'main#main',
         BUTTON_SHARE_CHAT: '[data-testid="share-chat-button"]',

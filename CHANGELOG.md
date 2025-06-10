@@ -2,6 +2,10 @@
 
 ---
 
+## [1.0.4] - 2025-06-10
+- Set the script icon to the ChatGPT icon.
+- Changed the selector for obtaining the sidebar width due to changes in the ChatGPT UI.
+
 ## [1.0.3] - 2025-06-01
 - In the development version, the "i" flag was automatically added to regular expressions. Although it was supposed to be removed for the release, some code remained, so it has now been fully deleted.
 
