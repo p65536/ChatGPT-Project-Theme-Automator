@@ -168,7 +168,7 @@
 | **bubblePadding**      | バブルの内側余白        | `"10px 14px"`                         | 対応CSSプロパティ：padding                      |
 | **bubbleBorderRadius** | バブルの角丸              | `"16px"`                              | 対応CSSプロパティ：border-radius<br>px/%など          |
 | **bubbleMaxWidth**     | バブルの最大幅            | `"400px"`                             | 対応CSSプロパティ：max-width<br>px/%など                   |
-| **standingImage**      | 立ち絵画像URL         | `"https://.../sample.png"`            | URLのみ。`url()`は不要                |
+| **standingImage**      | 立ち絵画像URL         | 例1:<br>`"https://.../sample.png"`<br>例2:<br>`"linear-gradient(to bottom, rgba(0,128,255,0.8) 0%, transparent 40%, transparent 60%, rgba(0,255,128,0.7) 100%),url('https://.../sample.png')"`            | 対応CSSプロパティ：background-image形式<br>ただし利便性のために、単一の画像URLの場合はURLのみ記述することを許容する(例1)。あるいは正式に`url('...')`と書いてもよい。<br>複数画像を指定する場合はCSSルール通りカンマ区切りで列挙する(例2) 。|
 
 ---
 
@@ -177,7 +177,7 @@
 | プロパティ名           | 用途・説明                       | 記述例                                      | 備考・指定可能な値                                              |
 | ---------------------- | -------------------------------- | ------------------------------------------- | --------------------------------------------------------------- |
 | **windowBgColor**      | チャットウィンドウの背景色   | `"#11131c"`                                 | 対応CSSプロパティ：background-color<br>CSSカラーコード                                                 |
-| **windowBgImage**      | チャットウィンドウの背景画像 | `"url('https://.../bg.png')"`               | 対応CSSプロパティ：background-image形式<br>**必ず`url('...')`。グラデーション可**<br>例:`linear-gradient(...)` |
+| **windowBgImage**      | チャットウィンドウの背景画像 | 例1:<br>`"https://.../samplebgbg.png"`<br>例2:<br>`"linear-gradient(to bottom, rgba(0,128,255,0.8) 0%, transparent 40%, transparent 60%, rgba(0,255,128,0.7) 100%),url('https://.../samplebgbg.png')"`            | 対応CSSプロパティ：background-image形式<br>ただし利便性のために、単一の画像URLの場合はURLのみ記述することを許容する(例1)。あるいは正式に`url('...')`と書いてもよい。<br>複数画像を指定する場合はCSSルール通りカンマ区切りで列挙する(例2) 。|
 | **windowBgSize**       | 背景画像のサイズ指定             | `"cover"`<br>`"contain"`<br>`"auto"`        | 対応CSSプロパティ：background-size                                           |
 | **windowBgPosition**   | 背景画像の位置指定               | `"center center"`<br>`"left top"`           | 対応CSSプロパティ：background-position                                       |
 | **windowBgRepeat**     | 背景画像の繰り返し設定           | `"no-repeat"`<br>`"repeat"`<br>`"repeat-x"` | 対応CSSプロパティ：background-repeat                                         |

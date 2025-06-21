@@ -1,6 +1,11 @@
 # Changelog
 
 ---
+## [1.1.0] - 2025-06-21
+- (Changed) Significantly refactored the avatar injection logic for improved performance and maintainability.
+- (Changed) Standing Image Implementation**: Changed the implementation of standing images from using `<img>` tags to using the `background-image` property on `<div>` elements.
+- (Changed) Specify `bubblePadding` and `bubbleBorderRadius` in `defaultSet`.
+- (Added) Enhanced Standing Images**: Following the implementation change, the `standingImage` property now supports CSS functions like `linear-gradient()`, allowing for gradients and other complex backgrounds in addition to standard image URLs.
 
 ## [1.0.4] - 2025-06-10
 - Set the script icon to the ChatGPT icon.

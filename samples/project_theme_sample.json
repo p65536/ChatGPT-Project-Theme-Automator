@@ -119,8 +119,8 @@
       "textcolor": "#009688",
       "font": null,
       "bubbleBgColor": null,
-      "bubblePadding": null,
-      "bubbleBorderRadius": null,
+      "bubblePadding": "6px 10px",
+      "bubbleBorderRadius": "10px",
       "bubbleMaxWidth": null,
       "standingImage": null
     },
@@ -130,8 +130,8 @@
       "textcolor": "#ff9800",
       "font": null,
       "bubbleBgColor": null,
-      "bubblePadding": null,
-      "bubbleBorderRadius": null,
+      "bubblePadding": "6px 10px",
+      "bubbleBorderRadius": "10px",
       "bubbleMaxWidth": null,
       "standingImage": null
     },

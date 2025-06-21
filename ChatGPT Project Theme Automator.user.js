@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ChatGPT Project Theme Automator
 // @namespace    https://github.com/p65536
-// @version      1.0.4
+// @version      1.1.0
 // @license      MIT
 // @description  Automatically applies a theme based on the project name (changes user/assistant names, text color, icon, bubble style, window background, input area style, standing images, etc.)
 // @icon         https://chatgpt.com/favicon.ico
@@ -68,8 +68,8 @@
                 textcolor: null,
                 font: null,
                 bubbleBgColor: null,
-                bubblePadding: null,
-                bubbleBorderRadius: null,
+                bubblePadding: "6px 10px",
+                bubbleBorderRadius: "10px",
                 bubbleMaxWidth: null,
                 standingImage: null
             },
@@ -79,8 +79,8 @@
                 textcolor: null,
                 font: null,
                 bubbleBgColor: null,
-                bubblePadding: "10px 14px",
-                bubbleBorderRadius: "16px",
+                bubblePadding: "6px 10px",
+                bubbleBorderRadius: "10px",
                 bubbleMaxWidth: null,
                 standingImage: null
             },
@@ -140,12 +140,11 @@
     const state = {
         CPTA_CONFIG: null,
 
-        appliedThemeId: null,
         themeStyleElem: null,
 
         lastURL: null,
         lastProject: null,
-        lastAppliedThemeProps: null,
+        lastAppliedThemeSet: null,
 
         globalProjectObserver: null,
         currentProjectNameSourceObserver: null,
@@ -179,6 +178,44 @@
             clearTimeout(timeout);
             timeout = setTimeout(() => func.apply(this, args), delay);
         };
+    }
+
+    /**
+     * Creates a CSS-compatible url() value from an icon string.
+     * Converts SVG strings to a data URL, otherwise returns a standard url().
+     * @param {string} icon - The icon string (SVG or URL).
+     * @returns {string} A CSS url() value.
+     */
+    function createIconCssUrl(icon) {
+        if (!icon) return 'none';
+        if (/^<svg\b/i.test(icon.trim())) {
+            // Encode SVG for data URL
+            const encodedSvg = encodeURIComponent(icon
+                                                  .replace(/"/g, "'") // Use single quotes
+                                                  .replace(/\s+/g, ' ') // Minify whitespace
+                                                 ).replace(/[()]/g, (c) => `%${c.charCodeAt(0).toString(16)}`); // Escape parentheses
+            return `url("data:image/svg+xml,${encodedSvg}")`;
+        }
+        // Assume it's a regular URL
+        return `url(${icon})`;
+    }
+
+    /**
+     * Formats a string so that it is valid as a CSS background-image value.
+     * @param {string | null} value
+     * @returns {string | null} formatted value
+     */
+    function formatCssBgImageValue(value) {
+        if (!value) return null;
+        const trimmedVal = String(value).trim();
+
+        // If it is already in the form of a CSS function, return it as is.
+        if (/^[a-z-]+\(.*\)$/i.test(trimmedVal)) {
+            return trimmedVal;
+        }
+
+        const escapedVal = trimmedVal.replace(/"/g, '\\"');
+        return `url("${escapedVal}")`;
     }
 
     // =================================================================================
@@ -388,143 +425,124 @@
     //              managing avatar injection, and handling standing images.
     // =================================================================================
 
-    // ---- CSS Theme Application ----
     /**
-     * Creates the CSS string based on the current theme settings.
-     * @returns {string} The generated CSS rules.
+     * Updates CSS custom properties on the :root element with the current theme's values.
+     * @param {object} baseSet - The base theme set.
+     * @param {object} userConf - The resolved user configuration.
+     * @param {object} assistantConf - The resolved assistant configuration.
+     * @param {object} defaultFullConf - The full default configuration for fallback.
      */
-    function createThemeCSS() {
-        const baseSet = getThemeSet();
-        const userConf = getActorConfig('user', baseSet, state.CPTA_CONFIG.defaultSet);
-        const assistantConf = getActorConfig('assistant', baseSet, state.CPTA_CONFIG.defaultSet);
-        const defaultFullConf = state.CPTA_CONFIG.defaultSet;
+    function updateThemeVars(baseSet, userConf, assistantConf, defaultFullConf) {
+        const rootStyle = document.documentElement.style;
 
-        let cssRules = [];
-
-        // --- User Styles ---
-        const userBubbleSelector = SELECTORS.USER_BUBBLE_CSS_TARGET;
-        const userTextContentSelector = SELECTORS.USER_TEXT_CONTENT_CSS_TARGET;
-        let userBubbleStyles = [];
-
-        if (userConf.bubbleBgColor) { userBubbleStyles.push(`background-color: ${userConf.bubbleBgColor};`); }
-        if (userConf.bubblePadding) { userBubbleStyles.push(`padding: ${userConf.bubblePadding};`); }
-        if (userConf.bubbleBorderRadius) { userBubbleStyles.push(`border-radius: ${userConf.bubbleBorderRadius};`); }
-        if (userConf.bubbleMaxWidth) {
-            userBubbleStyles.push(`max-width: ${userConf.bubbleMaxWidth};`);
-            userBubbleStyles.push(`margin-left: auto;`);
-            userBubbleStyles.push(`margin-right: 0;`);
-        }
-        if (userBubbleStyles.length > 0) {
-            if (userConf.bubblePadding || userConf.bubbleBorderRadius) { userBubbleStyles.push('box-sizing: border-box;'); }
-            cssRules.push(`${userBubbleSelector} { ${userBubbleStyles.join(' ')} }`);
-        }
-        if (userConf.font) { cssRules.push(`${userTextContentSelector} { font-family: ${userConf.font}; }`); }
-        if (userConf.textcolor) { cssRules.push(`${userTextContentSelector} { color: ${userConf.textcolor}; }`); }
-
-        // --- Assistant Styles ---
-        const assistantBubbleSelector = SELECTORS.ASSISTANT_BUBBLE_MD_CSS_TARGET;
-        const assistantMarkdownSelector = SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET;
-        const assistantWhitespaceSelector = SELECTORS.ASSISTANT_WHITESPACE_CSS_TARGET;
-        let assistantBubbleStyles = [];
-
-        if (assistantConf.bubbleBgColor) { assistantBubbleStyles.push(`background-color: ${assistantConf.bubbleBgColor};`); }
-        if (assistantConf.bubblePadding) { assistantBubbleStyles.push(`padding: ${assistantConf.bubblePadding};`); }
-        if (assistantConf.bubbleBorderRadius) { assistantBubbleStyles.push(`border-radius: ${assistantConf.bubbleBorderRadius};`); }
-        if (assistantConf.bubbleMaxWidth) {
-            assistantBubbleStyles.push(`max-width: ${assistantConf.bubbleMaxWidth};`);
-            assistantBubbleStyles.push(`margin-right: auto;`);
-            assistantBubbleStyles.push(`margin-left: 0;`);
-        }
-
-        if (assistantBubbleStyles.length > 0) {
-            if (assistantConf.bubblePadding || assistantConf.bubbleBorderRadius) { assistantBubbleStyles.push('box-sizing: border-box;'); }
-            cssRules.push(`${assistantBubbleSelector} { ${assistantBubbleStyles.join(' ')} }`);
-
-            const assistantCodeBubbleSelector = `div[data-message-author-role="assistant"] div:has(> .whitespace-pre-wrap):not(${assistantBubbleSelector})`;
-            if (assistantBubbleStyles.some(style => style.startsWith('background-color:') || style.startsWith('padding:') || style.startsWith('border-radius:'))) {
-                cssRules.push(`${assistantCodeBubbleSelector} { ${assistantBubbleStyles.join(' ')} }`);
-            }
-        }
-
-        if (assistantConf.font) { cssRules.push(`${assistantMarkdownSelector}, ${assistantWhitespaceSelector} { font-family: ${assistantConf.font}; }`); }
-        if (assistantConf.textcolor) {
-            cssRules.push(`
-                ${assistantMarkdownSelector} p,
-                ${assistantMarkdownSelector} h1, ${assistantMarkdownSelector} h2, ${assistantMarkdownSelector} h3, ${assistantMarkdownSelector} h4, ${assistantMarkdownSelector} h5, ${assistantMarkdownSelector} h6,
-                ${assistantMarkdownSelector} ul li, ${assistantMarkdownSelector} ol li,
-                ${assistantMarkdownSelector} ul li::marker, ${assistantMarkdownSelector} ol li::marker,
-                ${assistantMarkdownSelector} strong, ${assistantMarkdownSelector} em,
-                ${assistantMarkdownSelector} blockquote,
-                ${assistantMarkdownSelector} table, ${assistantMarkdownSelector} th, ${assistantMarkdownSelector} td {
-                color: ${assistantConf.textcolor};
-            }`);
-        }
-
-        // --- Window/Chat Area Background Styles ---
-        const chatAreaSelector = SELECTORS.CHAT_MAIN_AREA_BG_TARGET;
-        let windowStyles = [];
-
-        const windowBgColor = baseSet.windowBgColor ?? defaultFullConf.windowBgColor ?? null;
-        const windowBgImage = baseSet.windowBgImage ?? defaultFullConf.windowBgImage ?? null;
-        const windowBgSize = baseSet.windowBgSize ?? defaultFullConf.windowBgSize;
-        const windowBgPosition = baseSet.windowBgPosition ?? defaultFullConf.windowBgPosition;
-        const windowBgRepeat = baseSet.windowBgRepeat ?? defaultFullConf.windowBgRepeat;
-        const windowBgAttachment = baseSet.windowBgAttachment ?? defaultFullConf.windowBgAttachment;
-
-        if (windowBgColor) { windowStyles.push(`background-color: ${windowBgColor};`); }
-        if (windowBgImage) {
-            windowStyles.push(`background-image: ${windowBgImage};`);
-            if (windowBgSize) { windowStyles.push(`background-size: ${windowBgSize};`); }
-            if (windowBgPosition) { windowStyles.push(`background-position: ${windowBgPosition};`); }
-            if (windowBgRepeat) { windowStyles.push(`background-repeat: ${windowBgRepeat};`); }
-            if (windowBgAttachment) { windowStyles.push(`background-attachment: ${windowBgAttachment};`); }
-        }
-        if (windowStyles.length > 0) {
-            cssRules.push(`${chatAreaSelector} { ${windowStyles.join(' ')} }`);
-
-            // patch for Header
-            cssRules.push(`#page-header { background: transparent; }`);
-
-            // patch for Share button
-            cssRules.push(`${SELECTORS.BUTTON_SHARE_CHAT} { background: transparent; }`);
-            cssRules.push(`${SELECTORS.BUTTON_SHARE_CHAT}:hover { background-color: var(--interactive-bg-secondary-hover);}`);
-        }
-
-        // --- Chat Input Area Styles ---
-        const inputAreaConf = {
-            bgColor: baseSet.inputAreaBgColor ?? defaultFullConf.inputAreaBgColor ?? null,
-            textColor: baseSet.inputAreaTextColor ?? defaultFullConf.inputAreaTextColor ?? null,
-            placeholderColor: baseSet.inputAreaPlaceholderColor ?? defaultFullConf.inputAreaPlaceholderColor ?? null,
+        const themeVars = {
+            // User
+            '--cpta-user-name': userConf.name ? `'${userConf.name.replace(/'/g, "\\'")}'` : null,
+            '--cpta-user-icon': createIconCssUrl(userConf.icon),
+            '--cpta-user-textcolor': userConf.textcolor ?? null,
+            '--cpta-user-font': userConf.font ?? null,
+            '--cpta-user-bubble-bg': userConf.bubbleBgColor ?? null,
+            '--cpta-user-bubble-padding': userConf.bubblePadding ?? null,
+            '--cpta-user-bubble-radius': userConf.bubbleBorderRadius ?? null,
+            '--cpta-user-bubble-maxwidth': userConf.bubbleMaxWidth ?? null,
+            '--cpta-user-bubble-margin-left': userConf.bubbleMaxWidth ? 'auto' : null,
+            '--cpta-user-bubble-margin-right': userConf.bubbleMaxWidth ? '0' : null,
+            // Assistant
+            '--cpta-assistant-name': assistantConf.name ? `'${assistantConf.name.replace(/'/g, "\\'")}'` : null,
+            '--cpta-assistant-icon': createIconCssUrl(assistantConf.icon),
+            '--cpta-assistant-textcolor': assistantConf.textcolor ?? null,
+            '--cpta-assistant-font': assistantConf.font ?? null,
+            '--cpta-assistant-bubble-bg': assistantConf.bubbleBgColor ?? null,
+            '--cpta-assistant-bubble-padding': assistantConf.bubblePadding ?? null,
+            '--cpta-assistant-bubble-radius': assistantConf.bubbleBorderRadius ?? null,
+            '--cpta-assistant-bubble-maxwidth': assistantConf.bubbleMaxWidth ?? null,
+            '--cpta-assistant-margin-right': assistantConf.bubbleMaxWidth ? 'auto' : null,
+            '--cpta-assistant-margin-left': assistantConf.bubbleMaxWidth ? '0' : null,
+            // Window/input
+            '--cpta-window-bg-color': baseSet.windowBgColor ?? defaultFullConf.windowBgColor,
+            '--cpta-window-bg-image': formatCssBgImageValue(baseSet.windowBgImage ?? defaultFullConf.windowBgImage),
+            '--cpta-window-bg-size': baseSet.windowBgSize ?? defaultFullConf.windowBgSize,
+            '--cpta-window-bg-pos': baseSet.windowBgPosition ?? defaultFullConf.windowBgPosition,
+            '--cpta-window-bg-repeat': baseSet.windowBgRepeat ?? defaultFullConf.windowBgRepeat,
+            '--cpta-window-bg-attach': baseSet.windowBgAttachment ?? defaultFullConf.windowBgAttachment,
+            '--cpta-input-bg': baseSet.inputAreaBgColor ?? defaultFullConf.inputAreaBgColor,
+            '--cpta-input-color': baseSet.inputAreaTextColor ?? defaultFullConf.inputAreaTextColor,
+            '--cpta-input-ph-color': baseSet.inputAreaPlaceholderColor ?? defaultFullConf.inputAreaPlaceholderColor,
         };
 
-        const inputBarSelector = SELECTORS.INPUT_AREA_BG_TARGET;
-        const textInputFieldSelector = SELECTORS.INPUT_TEXT_FIELD_TARGET;
-        const placeholderSelector = SELECTORS.INPUT_PLACEHOLDER_TARGET;
-
-        let inputBarStyles = [];
-        if (inputAreaConf.bgColor) {
-            inputBarStyles.push(`background-color: ${inputAreaConf.bgColor};`);
+        for (const [key, value] of Object.entries(themeVars)) {
+            if (value !== null && value !== undefined) {
+                rootStyle.setProperty(key, value);
+            } else {
+                rootStyle.removeProperty(key);
+            }
         }
-        if (inputBarStyles.length > 0) {
-            cssRules.push(`${inputBarSelector} { ${inputBarStyles.join(' ')} }`);
-        }
+    }
 
-        let textInputFieldStyles = [];
-        if (inputAreaConf.textColor) {
-            textInputFieldStyles.push(`color: ${inputAreaConf.textColor};`);
+    /**
+     * Creates a static CSS template string that uses CSS variables for theming.
+     * This is injected into the page only once.
+     * @returns {string} The static CSS ruleset.
+     */
+    function createThemeCSSTemplate() {
+        return `
+        /* User Styles */
+        ${SELECTORS.USER_BUBBLE_CSS_TARGET} {
+            background-color: var(--cpta-user-bubble-bg);
+            padding: var(--cpta-user-bubble-padding);
+            border-radius: var(--cpta-user-bubble-radius);
+            box-sizing: border-box;
         }
-        textInputFieldStyles.push(`background-color: transparent;`);
-
-        if (textInputFieldStyles.length > 0) {
-            cssRules.push(`${textInputFieldSelector} { ${textInputFieldStyles.join(' ')} }`);
+        ${SELECTORS.USER_TEXT_CONTENT_CSS_TARGET} {
+            color: var(--cpta-user-textcolor);
+            font-family: var(--cpta-user-font);
         }
-
-        if (inputAreaConf.placeholderColor) {
-            cssRules.push(`${placeholderSelector} { color: ${inputAreaConf.placeholderColor}; }`);
+        /* Assistant Styles */
+        ${SELECTORS.ASSISTANT_BUBBLE_MD_CSS_TARGET},
+        div[data-message-author-role="assistant"] div:has(> .whitespace-pre-wrap):not(${SELECTORS.ASSISTANT_BUBBLE_MD_CSS_TARGET}) {
+            background-color: var(--cpta-assistant-bubble-bg);
+            padding: var(--cpta-assistant-bubble-padding);
+            border-radius: var(--cpta-assistant-bubble-radius);
+            box-sizing: border-box;
         }
-
-        cssRules.push(`#fixedTextUIRoot, #fixedTextUIRoot * { color: inherit; }`);
-        return cssRules.join('\n');
+        ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET},
+        ${SELECTORS.ASSISTANT_WHITESPACE_CSS_TARGET} {
+            font-family: var(--cpta-assistant-font);
+        }
+        ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} p,
+        ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h1, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h2, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h3, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h4, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h5, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h6,
+        ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} ul li, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} ol li,
+        ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} ul li::marker, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} ol li::marker,
+        ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} strong, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} em,
+        ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} blockquote,
+        ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} table, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} th, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} td {
+            color: var(--cpta-assistant-textcolor);
+        }
+        /* Window/Chat Area Background Styles */
+        ${SELECTORS.CHAT_MAIN_AREA_BG_TARGET} {
+            background-color: var(--cpta-window-bg-color);
+            background-image: var(--cpta-window-bg-image);
+            background-size: var(--cpta-window-bg-size);
+            background-position: var(--cpta-window-bg-pos);
+            background-repeat: var(--cpta-window-bg-repeat);
+            background-attachment: var(--cpta-window-bg-attach);
+        }
+        #page-header { background: transparent; }
+        ${SELECTORS.BUTTON_SHARE_CHAT} { background: transparent; }
+        ${SELECTORS.BUTTON_SHARE_CHAT}:hover { background-color: var(--interactive-bg-secondary-hover); }
+        /* Chat Input Area Styles */
+        ${SELECTORS.INPUT_AREA_BG_TARGET} {
+            background-color: var(--cpta-input-bg);
+        }
+        ${SELECTORS.INPUT_TEXT_FIELD_TARGET} {
+            color: var(--cpta-input-color);
+            background-color: transparent;
+        }
+        ${SELECTORS.INPUT_PLACEHOLDER_TARGET} {
+            color: var(--cpta-input-ph-color);
+        }
+        #fixedTextUIRoot, #fixedTextUIRoot * { color: inherit; }
+    `;
     }
 
     /**
@@ -532,52 +550,56 @@
      * It only updates the CSS if the themeId (derived from theme content) has changed.
      */
     function applyTheme() {
+        // Inject the static CSS template if it doesn't exist yet
         if (!state.themeStyleElem) {
             state.themeStyleElem = document.createElement('style');
             state.themeStyleElem.id = 'cpta-theme-style';
+            state.themeStyleElem.textContent = createThemeCSSTemplate();
             document.head.appendChild(state.themeStyleElem);
         }
-        const css = createThemeCSS();
+
+        // Get current theme config
         const baseSet = getThemeSet();
         const userConf = getActorConfig('user', baseSet, state.CPTA_CONFIG.defaultSet);
         const assistantConf = getActorConfig('assistant', baseSet, state.CPTA_CONFIG.defaultSet);
         const defaultFullConf = state.CPTA_CONFIG.defaultSet;
 
-        // same structure as currentThemeContentProps (except: url, project)
-        const themeIdParts = [
-            userConf.name ?? '',
-            userConf.icon ?? '',
-            userConf.textcolor ?? '',
-            userConf.font ?? '',
-            userConf.bubbleBgColor ?? '',
-            userConf.bubblePadding ?? '',
-            userConf.bubbleBorderRadius ?? '',
-            userConf.bubbleMaxWidth ?? '',
-            userConf.standingImage ?? '',
-            assistantConf.name ?? '',
-            assistantConf.icon ?? '',
-            assistantConf.textcolor ?? '',
-            assistantConf.font ?? '',
-            assistantConf.bubbleBgColor ?? '',
-            assistantConf.bubblePadding ?? '',
-            assistantConf.bubbleBorderRadius ?? '',
-            assistantConf.bubbleMaxWidth ?? '',
-            assistantConf.standingImage ?? '',
-            baseSet.windowBgColor ?? defaultFullConf.windowBgColor ?? '',
-            baseSet.windowBgImage ?? defaultFullConf.windowBgImage ?? '',
-            baseSet.windowBgSize ?? defaultFullConf.windowBgSize,
-            baseSet.windowBgPosition ?? defaultFullConf.windowBgPosition,
-            baseSet.windowBgRepeat ?? defaultFullConf.windowBgRepeat,
-            baseSet.windowBgAttachment ?? defaultFullConf.windowBgAttachment,
-            baseSet.inputAreaBgColor ?? defaultFullConf.inputAreaBgColor ?? '',
-            baseSet.inputAreaTextColor ?? defaultFullConf.inputAreaTextColor ?? '',
-            baseSet.inputAreaPlaceholderColor ?? defaultFullConf.inputAreaPlaceholderColor ?? '',
-        ];
-        const themeId = themeIdParts.map(p => String(p ?? '')).join('_');
+        // Get or create a dedicated style element for dynamic max-width rules
+        const maxWidthStyleId = 'cpta-max-width-style';
+        let maxWidthStyleElem = document.getElementById(maxWidthStyleId);
+        if (!maxWidthStyleElem) {
+            maxWidthStyleElem = document.createElement('style');
+            maxWidthStyleElem.id = maxWidthStyleId;
+            document.head.appendChild(maxWidthStyleElem);
+        }
 
-        if (state.appliedThemeId === themeId) return;
-        state.themeStyleElem.textContent = css;
-        state.appliedThemeId = themeId;
+        const maxWidthRules = [];
+        // Apply user max-width rule only if the value is set
+        if (userConf.bubbleMaxWidth) {
+            maxWidthRules.push(`
+                ${SELECTORS.USER_BUBBLE_CSS_TARGET} {
+                    max-width: var(--cpta-user-bubble-maxwidth);
+                    margin-left: var(--cpta-user-bubble-margin-left);
+                    margin-right: var(--cpta-user-bubble-margin-right);
+                }
+            `);
+        }
+        // Apply assistant max-width rule only if the value is set
+        if (assistantConf.bubbleMaxWidth) {
+            maxWidthRules.push(`
+                ${SELECTORS.ASSISTANT_BUBBLE_MD_CSS_TARGET},
+                div[data-message-author-role="assistant"] div:has(> .whitespace-pre-wrap):not(${SELECTORS.ASSISTANT_BUBBLE_MD_CSS_TARGET}) {
+                    max-width: var(--cpta-assistant-bubble-maxwidth);
+                    margin-right: var(--cpta-assistant-margin-right);
+                    margin-left: var(--cpta-assistant-margin-left);
+                }
+            `);
+        }
+        // Update the content of the dedicated style element
+        maxWidthStyleElem.textContent = maxWidthRules.join('\n');
+
+        // Update the CSS variables with the current theme's values
+        updateThemeVars(baseSet, userConf, assistantConf, defaultFullConf);
     }
 
     // ---- Avatar Management ----
@@ -587,58 +609,37 @@
      * @param {HTMLElement} msgElem - The message element with 'data-message-author-role'.
      */
     function injectAvatar(msgElem) {
-        const baseSet = getThemeSet();
         const role = msgElem.getAttribute('data-message-author-role');
         if (!role) return;
-        const set = getActorConfig(role, baseSet, state.CPTA_CONFIG.defaultSet);
-
-        const cacheKey = JSON.stringify(set);
-        if (msgElem.getAttribute('data-cpta-avatar-key') === cacheKey) return;
-
-        const old = msgElem.querySelector('.side-avatar-container');
-        if (old) old.remove();
 
         const msgWrapper = msgElem.closest('div');
         if (!msgWrapper) return;
+
+        // Do nothing if the avatar container already exists
+        if (msgWrapper.querySelector('.side-avatar-container')) return;
+
         msgWrapper.classList.add('chat-wrapper');
 
+        // Create a structural container without specific styles or content
         const container = document.createElement('div');
         container.className = 'side-avatar-container';
+
         const iconWrapper = document.createElement('span');
         iconWrapper.className = 'side-avatar-icon';
 
-        const icon = set.icon || '';
-        if (/^<svg\b/i.test(icon.trim())) {
-            iconWrapper.innerHTML = icon;
-        } else if (icon) {
-            const img = document.createElement('img');
-            img.className = 'side-avatar-icon';
-            img.src = icon;
-            img.alt = role;
-            iconWrapper.appendChild(img);
-        }
-
         const nameDiv = document.createElement('div');
         nameDiv.className = 'side-avatar-name';
-        nameDiv.textContent = set.name ?? '';
 
-        if (set.textcolor) {
-            nameDiv.style.color = set.textcolor;
-        } else {
-            if (role === 'user') {
-                nameDiv.style.color = 'var(--text-secondary, #5d5d5d)';
-            } else if (role === 'assistant') {
-                nameDiv.style.color = 'var(--text-secondary, #5d5d5d)';
-            }
-        }
+        // The actual name and icon are set by CSS via ::after and background-image
         container.append(iconWrapper, nameDiv);
         msgWrapper.appendChild(container);
+
+        // Set min-height to accommodate the avatar
         requestAnimationFrame(() => {
             if (nameDiv.offsetHeight && state.CPTA_CONFIG.options.icon_size) {
                 msgWrapper.style.minHeight = (state.CPTA_CONFIG.options.icon_size + nameDiv.offsetHeight) + "px";
             }
         });
-        msgElem.setAttribute('data-cpta-avatar-key', cacheKey);
     }
 
     /**
@@ -651,25 +652,90 @@
         avatarStyle = document.createElement('style');
         avatarStyle.id = styleId;
         avatarStyle.textContent = `
-        .side-avatar-container {
-            position: absolute; top: 0; display: flex; flex-direction: column; align-items: center;
-            width: ${state.CPTA_CONFIG.options.icon_size}px;
-            pointer-events: none; white-space: normal; word-break: break-word;
-        }
-        .side-avatar-icon, .side-avatar-icon svg {
-            width: ${state.CPTA_CONFIG.options.icon_size}px; height: ${state.CPTA_CONFIG.options.icon_size}px;
-            border-radius: 50%; display: block; box-shadow: 0 0 6px rgba(0,0,0,0.2); object-fit: cover;
-        }
-        .side-avatar-name {
-            font-size: 0.75rem; text-align: center; margin-top: 4px; width: 100%;
-        }
-        .chat-wrapper[data-message-author-role="user"] .side-avatar-container {
-            right: calc(-${state.CPTA_CONFIG.options.icon_size}px - ${ICON_MARGIN}px);
-        }
-        .chat-wrapper[data-message-author-role="assistant"] .side-avatar-container {
-            left: calc(-${state.CPTA_CONFIG.options.icon_size}px - ${ICON_MARGIN}px);
-        }`;
+         .side-avatar-container {
+             position: absolute; top: 0; display: flex; flex-direction: column; align-items: center;
+             width: ${state.CPTA_CONFIG.options.icon_size}px;
+             pointer-events: none; white-space: normal; word-break: break-word;
+         }
+         .side-avatar-icon {
+             width: ${state.CPTA_CONFIG.options.icon_size}px; height: ${state.CPTA_CONFIG.options.icon_size}px;
+             border-radius: 50%; display: block; box-shadow: 0 0 6px rgba(0,0,0,0.2);
+             background-size: cover; background-position: center; background-repeat: no-repeat;
+         }
+         .side-avatar-name {
+             font-size: 0.75rem; text-align: center; margin-top: 4px; width: 100%;
+         }
+         .chat-wrapper[data-message-author-role="user"] .side-avatar-container {
+             right: calc(-${state.CPTA_CONFIG.options.icon_size}px - ${ICON_MARGIN}px);
+         }
+         .chat-wrapper[data-message-author-role="assistant"] .side-avatar-container {
+             left: calc(-${state.CPTA_CONFIG.options.icon_size}px - ${ICON_MARGIN}px);
+         }
+         /* --- Dynamic Content via CSS Variables --- */
+         .chat-wrapper[data-message-author-role="user"] .side-avatar-icon {
+             background-image: var(--cpta-user-icon);
+         }
+         .chat-wrapper[data-message-author-role="user"] .side-avatar-name {
+             color: var(--cpta-user-textcolor);
+         }
+         .chat-wrapper[data-message-author-role="user"] .side-avatar-name::after {
+             content: var(--cpta-user-name);
+         }
+         .chat-wrapper[data-message-author-role="assistant"] .side-avatar-icon {
+             background-image: var(--cpta-assistant-icon);
+         }
+         .chat-wrapper[data-message-author-role="assistant"] .side-avatar-name {
+             color: var(--cpta-assistant-textcolor);
+         }
+         .chat-wrapper[data-message-author-role="assistant"] .side-avatar-name::after {
+             content: var(--cpta-assistant-name);
+         }
+         `;
         document.head.appendChild(avatarStyle);
+    }
+
+    /**
+     * Injects the CSS rules required for standing images.
+     */
+    function injectStandingImageStyle() {
+        const styleId = 'cpta-standing-image-style';
+        if (document.getElementById(styleId)) return;
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = `
+          #cpta-standing-image-user, #cpta-standing-image-assistant {
+              position: fixed;
+              bottom: 0px;
+              height: 100vh;
+              min-height: 100px;
+              max-height: 100vh;
+              z-index: ${STANDING_IMAGE_Z_INDEX};
+              pointer-events: none;
+              margin: 0; padding: 0;
+              background-repeat: no-repeat;
+              background-position: bottom center;
+              background-size: contain;
+          }
+          #cpta-standing-image-assistant {
+              display: var(--cpta-si-assistant-display, none);
+              background-image: var(--cpta-si-assistant-bg-image, none);
+              left: var(--cpta-si-assistant-left, 0px);
+              width: var(--cpta-si-assistant-width, 0px);
+              max-width: var(--cpta-si-assistant-width, 0px);
+              mask-image: var(--cpta-si-assistant-mask, none);
+              -webkit-mask-image: var(--cpta-si-assistant-mask, none);
+          }
+          #cpta-standing-image-user {
+              display: var(--cpta-si-user-display, none);
+              background-image: var(--cpta-si-user-bg-image, none);
+              right: 0px;
+              width: var(--cpta-si-user-width, 0px);
+              max-width: var(--cpta-si-user-width, 0px);
+              mask-image: var(--cpta-si-user-mask, none);
+              -webkit-mask-image: var(--cpta-si-user-mask, none);
+          }
+        `;
+        document.head.appendChild(style);
     }
 
     // ---- Standing Image Management ----
@@ -694,123 +760,41 @@
     /**
      * Updates the display and positioning of user and assistant standing images.
      * This function handles retries if essential DOM elements are not initially available.
-     * @param {string|null} userImgUrl - URL for the user's standing image.
-     * @param {string|null} assistantImgUrl - URL for the assistant's standing image.
+     * @param {string|null} userImgVal - URL for the user's standing image.
+     * @param {string|null} assistantImgVal - URL for the assistant's standing image.
      */
-    function updateStandingImages(userImgUrl, assistantImgUrl) {
-        const userImgId = 'cpta-standing-image-user';
-        const assistantImgId = 'cpta-standing-image-assistant';
-        let userImg = document.getElementById(userImgId);
-        let assistantImg = document.getElementById(assistantImgId);
+    function updateStandingImages(userImgVal, assistantImgVal) {
+        setupStandingImage('cpta-standing-image-user', userImgVal);
+        setupStandingImage('cpta-standing-image-assistant', assistantImgVal);
 
-        const setupImage = (imgElement, imgId, imgUrl) => {
-            let el = imgElement;
-            if (imgUrl) {
-                if (!el) {
-                    el = document.createElement('img');
-                    el.id = imgId;
-                    document.body.appendChild(el);
-                }
-                el.src = imgUrl;
-                Object.assign(el.style, {
-                    display: 'block',
-                    position: 'fixed',
-                    bottom: '0px',
-                    height: 'auto',
-                    maxHeight: '100vh',
-                    //width: 'auto',
-                    //maxWidth: '100vw',
-                    objectFit: 'contain',
-                    zIndex: String(STANDING_IMAGE_Z_INDEX),
-                    pointerEvents: 'none',
-                    margin: '0',
-                    padding: '0',
-                    left: '',
-                    right: '',
-                    top: ''
-                });
-            } else if (el) {
-                el.style.display = 'none';
-                el.src = '';
-            }
-            return el;
-        };
+        debouncedRecalculateStandingImagesLayout();
+    }
 
-        userImg = setupImage(userImg, userImgId, userImgUrl);
-        assistantImg = setupImage(assistantImg, assistantImgId, assistantImgUrl);
+    /**
+     * @param {string} id - element id
+     * @param {string|null} imgVal - standingImage
+     */
+    function setupStandingImage(id, imgVal) {
+        if (!document.getElementById(id)) {
+            const el = document.createElement('div');
+            el.id = id;
+            document.body.appendChild(el);
+        }
 
-        // chat area
-        const chatContent = document.querySelector(typeof SELECTORS !== "undefined" ? SELECTORS.CHAT_CONTENT_MAX_WIDTH : "");
-        if (!chatContent) {
-            if (userImg) userImg.style.display = 'none';
-            if (assistantImg) assistantImg.style.display = 'none';
+        const rootStyle = document.documentElement.style;
+        const actorType = id.includes('assistant') ? 'assistant' : 'user';
+        const displayVar = `--cpta-si-${actorType}-display`;
+        const bgImageVar = `--cpta-si-${actorType}-bg-image`;
 
-            // Retry process (to deal with the problem of the character portrait not being displayed immediately after reloading)
-            if (typeof standingImagesRetryCount !== "undefined" && typeof MAX_STANDING_IMAGES_RETRIES !== "undefined" && typeof debouncedRecalculateStandingImagesLayout === "function") {
-                if (standingImagesRetryCount < MAX_STANDING_IMAGES_RETRIES) {
-                    standingImagesRetryCount++;
-                    setTimeout(() => {
-                        debouncedRecalculateStandingImagesLayout();
-                    }, typeof STANDING_IMAGES_RETRY_INTERVAL !== "undefined" ? STANDING_IMAGES_RETRY_INTERVAL : 400);
-                } else {
-                    console.log('[CPTA Debug] updateStandingImages: Max retries reached for chatContent.');
-                    standingImagesRetryCount = 0;
-                }
-            }
+        const bgVal = formatCssBgImageValue(imgVal);
+        if (!bgVal) {
+            rootStyle.setProperty(displayVar, 'none');
+            rootStyle.removeProperty(bgImageVar);
             return;
         }
-        if (typeof standingImagesRetryCount !== "undefined") standingImagesRetryCount = 0;
 
-        const chatRect = chatContent.getBoundingClientRect();
-        const sidebarWidth = getSidebarWidth();
-        const windowWidth = window.innerWidth;
-
-        // A function that creates a transparent mask on top of an image (if the image height is greater than the screen height)
-        function applyStandingImageMask(img) {
-            if (!img) return;
-            const apply = () => {
-                const visibleHeight = img.offsetHeight;
-                const windowHeight = window.innerHeight;
-                const maskVal = "linear-gradient(to bottom, transparent 0px, rgba(0,0,0,1) 60px, rgba(0,0,0,1) 100%)";
-                if (visibleHeight >= (windowHeight - 32)) {
-                    img.style.maskImage = maskVal;
-                    img.style.webkitMaskImage = maskVal;
-                } else {
-                    img.style.maskImage = "";
-                    img.style.webkitMaskImage = "";
-                }
-            };
-            if (img.complete && img.naturalWidth > 0) {
-                requestAnimationFrame(apply);
-            } else {
-                img.onload = () => requestAnimationFrame(apply);
-            }
-        }
-
-        // Assistant standing image (left aligned)
-        if (assistantImg && assistantImgUrl) {
-            assistantImg.style.left = sidebarWidth + 'px';
-            assistantImg.style.right = '';
-            assistantImg.style.top = '';
-            assistantImg.style.maxWidth = Math.max(0, chatRect.left - (sidebarWidth + state.CPTA_CONFIG.options.icon_size + (ICON_MARGIN) * 2)) + 'px';
-            assistantImg.style.width = Math.max(0, chatRect.left - (sidebarWidth + state.CPTA_CONFIG.options.icon_size + (ICON_MARGIN) * 2)) + 'px';
-
-            // transparent mask
-            applyStandingImageMask(assistantImg);
-
-        }
-
-        // User standing image (right aligned)
-        if (userImg && userImgUrl) {
-            userImg.style.right = '0px';
-            userImg.style.left = '';
-            userImg.style.top = '';
-            userImg.style.maxWidth = Math.max(0, windowWidth - chatRect.right - (state.CPTA_CONFIG.options.icon_size + (ICON_MARGIN) * 2)) + 'px';
-            userImg.style.width = Math.max(0, windowWidth - chatRect.right - (state.CPTA_CONFIG.options.icon_size + (ICON_MARGIN) * 2)) + 'px';
-
-            // transparent mask
-            applyStandingImageMask(userImg);
-        }
+        rootStyle.setProperty(displayVar, 'block');
+        rootStyle.setProperty(bgImageVar, bgVal);
     }
 
     /**
@@ -818,12 +802,51 @@
      * Typically called on window resize or sidebar resize.
      */
     const debouncedRecalculateStandingImagesLayout = debounce(() => {
+        const rootStyle = document.documentElement.style;
+        const chatContent = document.querySelector(SELECTORS.CHAT_CONTENT_MAX_WIDTH);
+
+        if (!chatContent) {
+            if (standingImagesRetryCount < MAX_STANDING_IMAGES_RETRIES) {
+                standingImagesRetryCount++;
+                setTimeout(debouncedRecalculateStandingImagesLayout, STANDING_IMAGES_RETRY_INTERVAL);
+            } else {
+                console.log('[CPTA Debug] Layout calculation: Max retries reached for chatContent.');
+                standingImagesRetryCount = 0;
+            }
+            return;
+        }
         standingImagesRetryCount = 0;
-        // Recalculate based on current config, in case only layout changed
-        const currentTheme = getThemeSet();
-        const userConf = getActorConfig('user', currentTheme, state.CPTA_CONFIG.defaultSet);
-        const assistantConf = getActorConfig('assistant', currentTheme, state.CPTA_CONFIG.defaultSet);
-        updateStandingImages(userConf.standingImage, assistantConf.standingImage);
+
+        const chatRect = chatContent.getBoundingClientRect();
+        const sidebarWidth = getSidebarWidth();
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        const iconSize = state.CPTA_CONFIG.options.icon_size;
+
+        // Assistant (left) layout calculation
+        const assistantWidth = Math.max(0, chatRect.left - (sidebarWidth + iconSize + (ICON_MARGIN * 2)));
+        rootStyle.setProperty('--cpta-si-assistant-left', sidebarWidth + 'px');
+        rootStyle.setProperty('--cpta-si-assistant-width', assistantWidth + 'px');
+
+        // User (right) layout calculation
+        const userWidth = Math.max(0, windowWidth - chatRect.right - (iconSize + (ICON_MARGIN * 2)));
+        rootStyle.setProperty('--cpta-si-user-width', userWidth + 'px');
+
+        // Masking logic
+        const maskValue = `linear-gradient(to bottom, transparent 0px, rgba(0,0,0,1) 60px, rgba(0,0,0,1) 100%)`;
+        const assistantImg = document.getElementById('cpta-standing-image-assistant');
+        if (assistantImg && assistantImg.offsetHeight >= (windowHeight - 32)) {
+            rootStyle.setProperty('--cpta-si-assistant-mask', maskValue);
+        } else {
+            rootStyle.setProperty('--cpta-si-assistant-mask', 'none');
+        }
+
+        const userImg = document.getElementById('cpta-standing-image-user');
+        if (userImg && userImg.offsetHeight >= (windowHeight - 32)) {
+            rootStyle.setProperty('--cpta-si-user-mask', maskValue);
+        } else {
+            rootStyle.setProperty('--cpta-si-user-mask', 'none');
+        }
     }, 250);
 
     /**
@@ -1318,7 +1341,7 @@
      * Main function to update the theme.
      * It determines if the URL, project, or theme content has changed and applies
      * necessary updates (CSS, standing images, avatars).
-     * It also updates the `state.lastURL`, `state.lastProject`, and `state.lastAppliedThemeProps`.
+     * It also updates the `state.lastURL`, `state.lastProject`, and `state.lastAppliedThemeSet`.
      */
     function updateTheme() {
         const currentLiveURL = location.href;
@@ -1336,77 +1359,20 @@
             state.lastProject = currentProjectName;
         }
 
-        const baseSet = getThemeSet();
-        const userConf = getActorConfig('user', baseSet, state.CPTA_CONFIG.defaultSet);
-        const assistantConf = getActorConfig('assistant', baseSet, state.CPTA_CONFIG.defaultSet);
-        const defaultFullConf = state.CPTA_CONFIG.defaultSet;
-
-        // same structure as user config (except: url, project)
-        const currentThemeContentProps = {
-            userName: userConf.name ?? '',
-            userIcon: userConf.icon ?? '',
-            userColor: userConf.textcolor ?? '',
-            userFont: userConf.font ?? '',
-            userBubbleBgColor: userConf.bubbleBgColor ?? '',
-            userBubbleBorderRadius: userConf.bubbleBorderRadius ?? '',
-            userBubbleMaxWidth: userConf.bubbleMaxWidth ?? '',
-            userBubblePadding: userConf.bubblePadding ?? '',
-            userStandingImage: userConf.standingImage ?? '',
-            assistantName: assistantConf.name ?? '',
-            assistantIcon: assistantConf.icon ?? '',
-            assistantBubbleBgColor: assistantConf.bubbleBgColor ?? '',
-            assistantBubbleBorderRadius: assistantConf.bubbleBorderRadius ?? '',
-            assistantBubbleMaxWidth: assistantConf.bubbleMaxWidth ?? '',
-            assistantBubblePadding: assistantConf.bubblePadding ?? '',
-            assistantColor: assistantConf.textcolor ?? '',
-            assistantFont: assistantConf.font ?? '',
-            assistantStandingImage: assistantConf.standingImage ?? '',
-            windowBgColor: baseSet.windowBgColor ?? defaultFullConf.windowBgColor ?? '',
-            windowBgImage: baseSet.windowBgImage ?? defaultFullConf.windowBgImage ?? '',
-            windowBgSize: baseSet.windowBgSize ?? defaultFullConf.windowBgSize ?? '',
-            windowBgPosition: baseSet.windowBgPosition ?? defaultFullConf.windowBgPosition ?? '',
-            windowBgRepeat: baseSet.windowBgRepeat ?? defaultFullConf.windowBgRepeat ?? '',
-            windowBgAttachment: baseSet.windowBgAttachment ?? defaultFullConf.windowBgAttachment ?? '',
-            inputAreaBgColor: baseSet.inputAreaBgColor ?? defaultFullConf.inputAreaBgColor ?? '',
-            inputAreaTextColor: baseSet.inputAreaTextColor ?? defaultFullConf.inputAreaTextColor ?? '',
-            inputAreaPlaceholderColor: baseSet.inputAreaPlaceholderColor ?? defaultFullConf.inputAreaPlaceholderColor ?? '',
-        };
-
-        const previousThemeContentProps = state.lastAppliedThemeProps || {};
+        const currentThemeSet = getThemeSet();
         let contentChanged = false;
-
-        for (const key in currentThemeContentProps) {
-            const currentVal = (currentThemeContentProps[key] === null || currentThemeContentProps[key] === undefined) ? '' : String(currentThemeContentProps[key]);
-            const lastVal = (previousThemeContentProps[key] === null || previousThemeContentProps[key] === undefined) ? '' : String(previousThemeContentProps[key]);
-            if (currentVal !== lastVal) {
-                contentChanged = true;
-                break;
-            }
-        }
-
-        if (!contentChanged) {
-            for (const key in previousThemeContentProps) {
-                if (!currentThemeContentProps.hasOwnProperty(key)) {
-                    contentChanged = true;
-                    break;
-                }
-            }
+        if (currentThemeSet !== state.lastAppliedThemeSet) {
+            contentChanged = true;
+            state.lastAppliedThemeSet = currentThemeSet;
         }
 
         const themeShouldUpdate = urlChanged || projectChanged || contentChanged;
 
-        // console.log('[CPTA Debug] updateTheme: urlChanged:', urlChanged, 'projectChanged:', projectChanged, 'contentChanged:', contentChanged, 'themeShouldUpdate:', themeShouldUpdate);
-
         if (themeShouldUpdate) {
             applyTheme();
+            const userConf = getActorConfig('user', currentThemeSet, state.CPTA_CONFIG.defaultSet);
+            const assistantConf = getActorConfig('assistant', currentThemeSet, state.CPTA_CONFIG.defaultSet);
             updateStandingImages(userConf.standingImage, assistantConf.standingImage);
-            document.querySelectorAll('[data-message-author-role]').forEach(msgElem => {
-                injectAvatar(msgElem);
-            });
-
-            if (contentChanged) {
-                state.lastAppliedThemeProps = { ...currentThemeContentProps };
-            }
         }
     }
 
@@ -1423,6 +1389,7 @@
         state.CPTA_CONFIG = await loadConfig(CONFIG_KEY, DEFAULT_THEME_CONFIG);
         state.CPTA_CONFIG.options.icon_size = getIconSizeFromConfig(state.CPTA_CONFIG);
         injectAvatarStyle();
+        injectStandingImageStyle();
         ensureCommonUIStyle();
         ensureSettingsBtn();
 
@@ -1431,9 +1398,7 @@
 
         // Add resize listener for standing images
         window.addEventListener('resize', debouncedRecalculateStandingImagesLayout);
-
         startSidebarResizeObserver();
-
     }
 
     // ---- Script Entry Point ----
@@ -1457,7 +1422,7 @@
                 { selector: SELECTORS.CHAT_MAIN_AREA_BG_TARGET, desc: "チャットメインエリア (背景適用対象)" },
                 { selector: SELECTORS.USER_BUBBLE_CSS_TARGET, desc: "ユーザーメッセージバブル" },
                 { selector: SELECTORS.ASSISTANT_BUBBLE_MD_CSS_TARGET, desc: "アシスタントメッセージバブル (Markdown)" },
-                { selector: SELECTORS.MESSAGE_AUTHOR_ROLE_ATTR, desc: "任意のメッセージ要素 (アバター注入対象)" }, // 属性セレクタなのでquerySelectorの使い方が少し異なるが、ここではセレクタ文字列として
+                { selector: SELECTORS.MESSAGE_AUTHOR_ROLE_ATTR, desc: "任意のメッセージ要素 (アバター注入対象)" },
                 { selector: SELECTORS.INPUT_AREA_BG_TARGET, desc: "入力エリアの背景変更対象" },
                 { selector: SELECTORS.INPUT_TEXT_FIELD_TARGET, desc: "入力テキストフィールド" },
                 { selector: SELECTORS.INPUT_PLACEHOLDER_TARGET, desc: "入力エリアプレースホルダー" },

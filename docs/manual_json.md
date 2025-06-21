@@ -172,7 +172,8 @@ Below is an example of the settings JSON structure.
 | **bubblePadding**   | Bubble inner padding                        | `"10px 14px"`                              | CSS property: padding                                                                                                         |
 | **bubbleBorderRadius** | Bubble corner radius                     | `"16px"`                                   | CSS property: border-radius (px, %)                                                                                           |
 | **bubbleMaxWidth**  | Maximum width of the bubble                 | `"400px"`                                  | CSS property: max-width (px, %)                                                                                               |
-| **standingImage**   | Standing image URL                          | `"https://.../sample.png"`                 | URL only (no `url()` needed)                                                                                                  |
+| **standingImage**      | Standing image URL         | Example 1:<br>`"https://.../sample.png"`<br>Example 2:<br>`"linear-gradient(to bottom, rgba(0,128,255,0.8) 0%, transparent 40%, transparent 60%, rgba(0,255,128,0.7) 100%),url('https://.../sample.png')"`            | CSS property: `background-image` format.<br>For convenience, if a single image URL is used, you may write just the URL (Example 1). Alternatively, you may use the formal `url('...')` syntax.<br>To specify multiple images, list them comma-separated as per CSS rules (Example 2). |
+
 
 ---
 
@@ -181,7 +182,7 @@ Below is an example of the settings JSON structure.
 | Property            | Purpose / Description                          | Example                                        | Notes & Allowed Values                                                              |
 |---------------------|------------------------------------------------|------------------------------------------------|-------------------------------------------------------------------------------------|
 | **windowBgColor**   | Chat window background color                   | `"#11131c"`                                    | CSS property: background-color                                                      |
-| **windowBgImage**   | Chat window background image                   | `"url('https://.../bg.png')"`                  | CSS property: background-image format. <br>**Always use `url('...')`.** Gradients allowed, e.g., `linear-gradient(...)`    |
+| **windowBgImage**      | Chat window background image | Example 1:<br>`"https://.../samplebgbg.png"`<br>Example 2:<br>`"linear-gradient(to bottom, rgba(0,128,255,0.8) 0%, transparent 40%, transparent 60%, rgba(0,255,128,0.7) 100%),url('https://.../samplebgbg.png')"`            | CSS property: `background-image` format.<br>For convenience, if a single image URL is used, you may write just the URL (Example 1). Alternatively, you may use the formal `url('...')` syntax.<br>To specify multiple images, list them comma-separated as per CSS rules (Example 2). |
 | **windowBgSize**    | Background image size                          | `"cover"` <br> `"contain"` <br> `"auto"`       | CSS property: background-size                                                       |
 | **windowBgPosition**| Background image position                      | `"center center"` <br> `"left top"`            | CSS property: background-position                                                   |
 | **windowBgRepeat**  | Background image repeat                        | `"no-repeat"` <br> `"repeat"` <br> `"repeat-x"`| CSS property: background-repeat                                                     |
