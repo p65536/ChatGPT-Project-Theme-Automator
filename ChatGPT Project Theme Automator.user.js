@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ChatGPT Project Theme Automator
 // @namespace    https://github.com/p65536
-// @version      1.1.0
+// @version      1.1.1
 // @license      MIT
 // @description  Automatically applies a theme based on the project name (changes user/assistant names, text color, icon, bubble style, window background, input area style, standing images, etc.)
 // @icon         https://chatgpt.com/favicon.ico
@@ -378,7 +378,7 @@
                             regexArr.push({ pattern: new RegExp(pattern, flags), set });
                         } catch (e) { /* ignore invalid regex strings in config */ }
                     } else {
-                        throw new Error(`[ThemeAutomator] projects entry must be a /pattern/flags string: ${proj}`);
+                        throw new Error(`[CPTA] projects entry must be a /pattern/flags string: ${proj}`);
                     }
                 } else if (proj instanceof RegExp) {
                     regexArr.push({ pattern: new RegExp(proj.source, proj.flags), set });
@@ -486,62 +486,27 @@
      */
     function createThemeCSSTemplate() {
         return `
-        /* User Styles */
-        ${SELECTORS.USER_BUBBLE_CSS_TARGET} {
-            background-color: var(--cpta-user-bubble-bg);
-            padding: var(--cpta-user-bubble-padding);
-            border-radius: var(--cpta-user-bubble-radius);
-            box-sizing: border-box;
-        }
-        ${SELECTORS.USER_TEXT_CONTENT_CSS_TARGET} {
-            color: var(--cpta-user-textcolor);
-            font-family: var(--cpta-user-font);
-        }
-        /* Assistant Styles */
+        /* --- Static Base Styles --- */
+        /* These rules are always applied regardless of the theme. */
+
+        ${SELECTORS.USER_BUBBLE_CSS_TARGET},
         ${SELECTORS.ASSISTANT_BUBBLE_MD_CSS_TARGET},
         div[data-message-author-role="assistant"] div:has(> .whitespace-pre-wrap):not(${SELECTORS.ASSISTANT_BUBBLE_MD_CSS_TARGET}) {
-            background-color: var(--cpta-assistant-bubble-bg);
-            padding: var(--cpta-assistant-bubble-padding);
-            border-radius: var(--cpta-assistant-bubble-radius);
             box-sizing: border-box;
         }
-        ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET},
-        ${SELECTORS.ASSISTANT_WHITESPACE_CSS_TARGET} {
-            font-family: var(--cpta-assistant-font);
+
+        #page-header,
+        ${SELECTORS.BUTTON_SHARE_CHAT} {
+            background: transparent;
         }
-        ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} p,
-        ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h1, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h2, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h3, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h4, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h5, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h6,
-        ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} ul li, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} ol li,
-        ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} ul li::marker, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} ol li::marker,
-        ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} strong, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} em,
-        ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} blockquote,
-        ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} table, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} th, ${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} td {
-            color: var(--cpta-assistant-textcolor);
+
+        ${SELECTORS.BUTTON_SHARE_CHAT}:hover {
+            background-color: var(--interactive-bg-secondary-hover);
         }
-        /* Window/Chat Area Background Styles */
-        ${SELECTORS.CHAT_MAIN_AREA_BG_TARGET} {
-            background-color: var(--cpta-window-bg-color);
-            background-image: var(--cpta-window-bg-image);
-            background-size: var(--cpta-window-bg-size);
-            background-position: var(--cpta-window-bg-pos);
-            background-repeat: var(--cpta-window-bg-repeat);
-            background-attachment: var(--cpta-window-bg-attach);
+
+        #fixedTextUIRoot, #fixedTextUIRoot * {
+            color: inherit;
         }
-        #page-header { background: transparent; }
-        ${SELECTORS.BUTTON_SHARE_CHAT} { background: transparent; }
-        ${SELECTORS.BUTTON_SHARE_CHAT}:hover { background-color: var(--interactive-bg-secondary-hover); }
-        /* Chat Input Area Styles */
-        ${SELECTORS.INPUT_AREA_BG_TARGET} {
-            background-color: var(--cpta-input-bg);
-        }
-        ${SELECTORS.INPUT_TEXT_FIELD_TARGET} {
-            color: var(--cpta-input-color);
-            background-color: transparent;
-        }
-        ${SELECTORS.INPUT_PLACEHOLDER_TARGET} {
-            color: var(--cpta-input-ph-color);
-        }
-        #fixedTextUIRoot, #fixedTextUIRoot * { color: inherit; }
     `;
     }
 
@@ -550,55 +515,77 @@
      * It only updates the CSS if the themeId (derived from theme content) has changed.
      */
     function applyTheme() {
-        // Inject the static CSS template if it doesn't exist yet
+        // --- 1. Get or create style elements ---
+        // Static styles (always present)
         if (!state.themeStyleElem) {
             state.themeStyleElem = document.createElement('style');
             state.themeStyleElem.id = 'cpta-theme-style';
             state.themeStyleElem.textContent = createThemeCSSTemplate();
             document.head.appendChild(state.themeStyleElem);
         }
+        // Dynamic rules (content changes based on theme)
+        const dynamicRulesStyleId = 'cpta-dynamic-rules-style';
+        let dynamicRulesStyleElem = document.getElementById(dynamicRulesStyleId);
+        if (!dynamicRulesStyleElem) {
+            dynamicRulesStyleElem = document.createElement('style');
+            dynamicRulesStyleElem.id = dynamicRulesStyleId;
+            document.head.appendChild(dynamicRulesStyleElem);
+        }
 
-        // Get current theme config
+        // --- 2. Get current theme config ---
         const baseSet = getThemeSet();
         const userConf = getActorConfig('user', baseSet, state.CPTA_CONFIG.defaultSet);
         const assistantConf = getActorConfig('assistant', baseSet, state.CPTA_CONFIG.defaultSet);
         const defaultFullConf = state.CPTA_CONFIG.defaultSet;
 
-        // Get or create a dedicated style element for dynamic max-width rules
-        const maxWidthStyleId = 'cpta-max-width-style';
-        let maxWidthStyleElem = document.getElementById(maxWidthStyleId);
-        if (!maxWidthStyleElem) {
-            maxWidthStyleElem = document.createElement('style');
-            maxWidthStyleElem.id = maxWidthStyleId;
-            document.head.appendChild(maxWidthStyleElem);
-        }
+        // --- 3. Build dynamic CSS rules based on config ---
+        const dynamicRules = [];
+        const assistantBubbleSelector = `${SELECTORS.ASSISTANT_BUBBLE_MD_CSS_TARGET}, div[data-message-author-role="assistant"] div:has(> .whitespace-pre-wrap):not(${SELECTORS.ASSISTANT_BUBBLE_MD_CSS_TARGET})`;
 
-        const maxWidthRules = [];
-        // Apply user max-width rule only if the value is set
+        // User Bubble
+        if (userConf.textcolor) { dynamicRules.push(`${SELECTORS.USER_TEXT_CONTENT_CSS_TARGET} { color: var(--cpta-user-textcolor); }`); }
+        if (userConf.font) { dynamicRules.push(`${SELECTORS.USER_TEXT_CONTENT_CSS_TARGET} { font-family: var(--cpta-user-font); }`); }
+        if (userConf.bubbleBgColor) { dynamicRules.push(`${SELECTORS.USER_BUBBLE_CSS_TARGET} { background-color: var(--cpta-user-bubble-bg); }`); }
+        if (userConf.bubblePadding) { dynamicRules.push(`${SELECTORS.USER_BUBBLE_CSS_TARGET} { padding: var(--cpta-user-bubble-padding); }`); }
+        if (userConf.bubbleBorderRadius) { dynamicRules.push(`${SELECTORS.USER_BUBBLE_CSS_TARGET} { border-radius: var(--cpta-user-bubble-radius); }`); }
         if (userConf.bubbleMaxWidth) {
-            maxWidthRules.push(`
-                ${SELECTORS.USER_BUBBLE_CSS_TARGET} {
-                    max-width: var(--cpta-user-bubble-maxwidth);
-                    margin-left: var(--cpta-user-bubble-margin-left);
-                    margin-right: var(--cpta-user-bubble-margin-right);
-                }
-            `);
+            dynamicRules.push(`${SELECTORS.USER_BUBBLE_CSS_TARGET} { max-width: var(--cpta-user-bubble-maxwidth); margin-left: var(--cpta-user-bubble-margin-left); margin-right: var(--cpta-user-bubble-margin-right); }`);
         }
-        // Apply assistant max-width rule only if the value is set
-        if (assistantConf.bubbleMaxWidth) {
-            maxWidthRules.push(`
-                ${SELECTORS.ASSISTANT_BUBBLE_MD_CSS_TARGET},
-                div[data-message-author-role="assistant"] div:has(> .whitespace-pre-wrap):not(${SELECTORS.ASSISTANT_BUBBLE_MD_CSS_TARGET}) {
-                    max-width: var(--cpta-assistant-bubble-maxwidth);
-                    margin-right: var(--cpta-assistant-margin-right);
-                    margin-left: var(--cpta-assistant-margin-left);
-                }
-            `);
-        }
-        // Update the content of the dedicated style element
-        maxWidthStyleElem.textContent = maxWidthRules.join('\n');
 
-        // Update the CSS variables with the current theme's values
+        // Assistant Bubble
+        if (assistantConf.font) { dynamicRules.push(`${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET}, ${SELECTORS.ASSISTANT_WHITESPACE_CSS_TARGET} { font-family: var(--cpta-assistant-font); }`); }
+        if (assistantConf.bubbleBgColor) { dynamicRules.push(`${assistantBubbleSelector} { background-color: var(--cpta-assistant-bubble-bg); }`); }
+        if (assistantConf.bubblePadding) { dynamicRules.push(`${assistantBubbleSelector} { padding: var(--cpta-assistant-bubble-padding); }`); }
+        if (assistantConf.bubbleBorderRadius) { dynamicRules.push(`${assistantBubbleSelector} { border-radius: var(--cpta-assistant-bubble-radius); }`); }
+        if (assistantConf.bubbleMaxWidth) {
+            dynamicRules.push(`${assistantBubbleSelector} { max-width: var(--cpta-assistant-bubble-maxwidth); margin-right: var(--cpta-assistant-margin-right); margin-left: var(--cpta-assistant-margin-left); }`);
+        }
+        if (assistantConf.textcolor) {
+            const selectors = [
+                `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} p`, `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h1`, `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h2`, `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h3`,
+                `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h4`, `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h5`, `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} h6`, `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} ul li`,
+                `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} ol li`, `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} ul li::marker`, `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} ol li::marker`, `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} strong`,
+                `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} em`, `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} blockquote`, `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} table`, `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} th`, `${SELECTORS.ASSISTANT_MARKDOWN_CSS_TARGET} td`
+            ];
+            dynamicRules.push(`${selectors.join(', ')} { color: var(--cpta-assistant-textcolor); }`);
+        }
+
+        // Window Background
+        if (baseSet.windowBgColor) { dynamicRules.push(`${SELECTORS.CHAT_MAIN_AREA_BG_TARGET} { background-color: var(--cpta-window-bg-color); }`); }
+        if (baseSet.windowBgImage) {
+            dynamicRules.push(`${SELECTORS.CHAT_MAIN_AREA_BG_TARGET} { background-image: var(--cpta-window-bg-image); background-size: var(--cpta-window-bg-size); background-position: var(--cpta-window-bg-pos); background-repeat: var(--cpta-window-bg-repeat); background-attachment: var(--cpta-window-bg-attach); }`);
+        }
+
+        // Input Area
+        if (baseSet.inputAreaBgColor) {
+            dynamicRules.push(`${SELECTORS.INPUT_AREA_BG_TARGET} { background-color: var(--cpta-input-bg); }`);
+            dynamicRules.push(`${SELECTORS.INPUT_TEXT_FIELD_TARGET} { background-color: transparent; }`);
+        }
+        if (baseSet.inputAreaTextColor) { dynamicRules.push(`${SELECTORS.INPUT_TEXT_FIELD_TARGET} { color: var(--cpta-input-color); }`); }
+        if (baseSet.inputAreaPlaceholderColor) { dynamicRules.push(`${SELECTORS.INPUT_PLACEHOLDER_TARGET} { color: var(--cpta-input-ph-color); }`); }
+
+        // --- 4. Apply rules and variables ---
+        dynamicRulesStyleElem.textContent = dynamicRules.join('\n');
         updateThemeVars(baseSet, userConf, assistantConf, defaultFullConf);
     }
 

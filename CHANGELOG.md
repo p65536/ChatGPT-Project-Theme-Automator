@@ -1,6 +1,10 @@
 # Changelog
 
 ---
+## [1.1.1] - 2025-06-21
+- (Fix) Fixed an issue where the chat bubble width, input area background, and text color would become transparent when their settings were null. Now, when unset, the default ChatGPT design is applied.
+- (Change) Unified the logic so that for bubble width, bubble background color, input area properties, etc., if the value is null or unset, the corresponding CSS is not output at all.
+
 ## [1.1.0] - 2025-06-21
 - (Changed) Significantly refactored the avatar injection logic for improved performance and maintainability.
 - (Changed) Standing Image Implementation**: Changed the implementation of standing images from using `<img>` tags to using the `background-image` property on `<div>` elements.
