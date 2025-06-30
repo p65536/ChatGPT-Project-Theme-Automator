@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPTA Config Converter</title>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --text-color: #d4d4d4;
+            --input-bg: #252526;
+            --border-color: #3c3c3c;
+            --button-bg: #0e639c;
+            --button-hover-bg: #1177bb;
+            --button-text: #ffffff;
+            --status-success-color: #4CAF50;
+            --status-error-color: #F44336;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Meiryo", "Yu Gothic UI", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 2em;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5em;
+        }
+        h1, p {
+            text-align: center;
+        }
+        .io-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5em;
+            width: 100%;
+        }
+        textarea {
+            width: 100%;
+            height: 40vh;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1em;
+            box-sizing: border-box;
+            font-family: "Consolas", "Monaco", monospace;
+            font-size: 14px;
+            resize: none;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1em;
+        }
+        button {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            border-radius: 4px;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: var(--button-hover-bg);
+        }
+        .status {
+            min-height: 1.2em;
+            font-weight: bold;
+        }
+        .status.success {
+            color: var(--status-success-color);
+        }
+        .status.error {
+            color: var(--status-error-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CPTA JSON Settings Converter<br>(for ver.1.1.1 or below)</h1>
+            <p>If you are using CPTA version 1.1.1 or earlier, please follow the steps below before updating to version 1.2 or later.</p>
+            <p>1. Export JSON in the settings screen<br>2. Convert JSON with this tool<br>3. Update CPTA to the latest version<br>4. Import JSON in the settings screen</p>
+            <hr>
+            <p>Paste the old-format JSON settings into the left column and press the "Convert" button.<br>The new-format JSON will be output in the right column.</p>
+        </header>
+
+        <div class="io-grid">
+            <div class="input-area">
+                <h2>Old Format</h2>
+                <textarea id="oldJson" placeholder="Paste old JSON here..."></textarea>
+            </div>
+            <div class="output-area">
+                <h2>New Format</h2>
+                <textarea id="newJson" readonly placeholder="The conversion result will be displayed here.."></textarea>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="convertBtn">Convert</button>
+            <div id="status" class="status"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('convertBtn').addEventListener('click', () => {
+            const oldJsonText = document.getElementById('oldJson').value;
+            const newJsonTextarea = document.getElementById('newJson');
+            const statusDiv = document.getElementById('status');
+            
+            statusDiv.textContent = '';
+            statusDiv.className = 'status';
+
+            if (!oldJsonText.trim()) {
+                statusDiv.textContent = 'Error: The input is empty.';
+                statusDiv.classList.add('error');
+                return;
+            }
+
+            try {
+                const oldConfig = JSON.parse(oldJsonText);
+                const newConfig = {
+                    options: oldConfig.options,
+                    features: oldConfig.features,
+                    themeSets: [],
+                    defaultSet: {}
+                };
+
+                // Helper to transform a single actor object
+                const transformActor = (oldActor) => {
+                    if (!oldActor) return {};
+                    return {
+                        name: oldActor.name || null,
+                        icon: oldActor.icon || null,
+                        textColor: oldActor.textcolor || null,
+                        font: oldActor.font || null,
+                        bubbleBackgroundColor: oldActor.bubbleBgColor || null,
+                        bubblePadding: oldActor.bubblePadding || null,
+                        bubbleBorderRadius: oldActor.bubbleBorderRadius || null,
+                        bubbleMaxWidth: oldActor.bubbleMaxWidth || null,
+                        standingImageUrl: oldActor.standingImage || null
+                    };
+                };
+
+                // Transform themeSets array
+                if (Array.isArray(oldConfig.themeSets)) {
+                    newConfig.themeSets = oldConfig.themeSets.map(oldTheme => {
+                        return {
+                            metadata: {
+                                id: oldTheme.themeId || `cpta-theme-generated-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                                name: oldTheme.themeName || 'Untitled Theme',
+                                matchPatterns: oldTheme.projects || []
+                            },
+                            assistant: transformActor(oldTheme.assistant),
+                            user: transformActor(oldTheme.user),
+                            window: {
+                                backgroundColor: oldTheme.windowBgColor || null,
+                                backgroundImageUrl: oldTheme.windowBgImage || null,
+                                backgroundSize: oldTheme.windowBgSize || null,
+                                backgroundPosition: oldTheme.windowBgPosition || null,
+                                backgroundRepeat: oldTheme.windowBgRepeat || null,
+                                backgroundAttachment: oldTheme.windowBgAttachment || null
+                            },
+                            inputArea: {
+                                backgroundColor: oldTheme.inputAreaBgColor || null,
+                                textColor: oldTheme.inputAreaTextColor || null,
+                                placeholderColor: oldTheme.inputAreaPlaceholderColor || null
+                            }
+                        };
+                    });
+                }
+
+                // Transform defaultSet
+                if (oldConfig.defaultSet) {
+                    newConfig.defaultSet = {
+                        assistant: transformActor(oldConfig.defaultSet.assistant),
+                        user: transformActor(oldConfig.defaultSet.user),
+                        window: {
+                            backgroundColor: oldConfig.defaultSet.windowBgColor || null,
+                            backgroundImageUrl: oldConfig.defaultSet.windowBgImage || null,
+                            backgroundSize: oldConfig.defaultSet.windowBgSize || null,
+                            backgroundPosition: oldConfig.defaultSet.windowBgPosition || null,
+                            backgroundRepeat: oldConfig.defaultSet.windowBgRepeat || null,
+                            backgroundAttachment: oldConfig.defaultSet.windowBgAttachment || null
+                        },
+                        inputArea: {
+                            backgroundColor: oldConfig.defaultSet.inputAreaBgColor || null,
+                            textColor: oldConfig.defaultSet.inputAreaTextColor || null,
+                            placeholderColor: oldConfig.defaultSet.inputAreaPlaceholderColor || null
+                        }
+                    };
+                }
+
+                newJsonTextarea.value = JSON.stringify(newConfig, null, 2);
+                statusDiv.textContent = 'The conversion completed successfully.';
+                statusDiv.classList.add('success');
+
+            } catch (error) {
+                newJsonTextarea.value = '';
+                statusDiv.textContent = 'Error: Invalid JSON format. Please check your input.';
+                statusDiv.classList.add('error');
+                console.error('JSON parsing or conversion error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

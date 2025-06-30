@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>SVG Escape Tool</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 2em auto;
+      padding: 1em;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      font-size: 1.5em;
+      margin-bottom: 1em;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      margin-bottom: 1em;
+      padding: 0.5em;
+      font-family: monospace;
+    }
+    button {
+      padding: 0.5em 1em;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 1em;
+    }
+  </style>
+</head>
+<body>
+  <h1>SVG Escape Tool</h1>
+
+  <label for="input">Paste SVG code below:</label>
+  <textarea id="input" placeholder="Paste your SVG code starting with &lt;svg&gt;"></textarea>
+
+  <button id="escapeBtn">Escape and Output</button>
+
+  <label for="output">Escaped Text:</label>
+  <textarea id="output" readonly placeholder="The escaped result will appear here"></textarea>
+
+  <script>
+    function escapeSvg(svg) {
+      return svg
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '');
+    }
+
+    document.getElementById("escapeBtn").addEventListener("click", () => {
+      const input = document.getElementById("input").value.trim();
+      const outputField = document.getElementById("output");
+
+      if (!input.startsWith("<svg")) {
+        alert("The input doesn't appear to be valid SVG. Make sure it starts with <svg>.");
+        return;
+      }
+
+      const escaped = escapeSvg(input);
+      outputField.value = escaped;
+    });
+  </script>
+</body>
+</html>
