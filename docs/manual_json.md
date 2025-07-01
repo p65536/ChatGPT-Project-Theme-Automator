@@ -1,214 +1,306 @@
-# ChatGPT Project Theme Automator Settings JSON: Full Reference & Samples
+# ChatGPT Project Theme Automator Configuration JSON: Full Item Reference
 
 ## Overview
 
-This page summarizes the purpose, usage examples, accepted values, and important notes for each configuration property.  
-If you're unsure how to customize your settings, refer to this guide.
-For even more details, see any standard online CSS reference.
+**[IMPORTANT] As of v1.2.0, the structure of the configuration has changed significantly.**
+* Property names have been unified to **camelCase**, like `"bubbleBackgroundColor"`.
+* `"projects"` has been changed to `"matchPatterns"` within the `"metadata"` object.
+* New `"features"` and `"options"` have been added for UI improvements and chat width settings.
+* Background and input area settings are now grouped under `"window"` and `"inputArea"` objects.
 
-**Note:**  
-The property names used in this script's settings are not always the same as the corresponding CSS property names.  
-For deeper technical details, search the web using the CSS property name (not the script setting name).  
-You can find the corresponding CSS property in the "Notes" column.
+**Old configuration files are not compatible. Please use the following tool to migrate your settings file.**  
+[Configuration File Converter](https://p65536.github.io/ChatGPT-Project-Theme-Automator/tools/convert_json.html)
+
+---
+
+This document provides a table summarizing the purpose, example usage, allowed values, and notes for each property.  
+Refer to this page if you get stuck during customization.
+
+**Note:** The property names used in this script's configuration are different from CSS property names. The corresponding CSS property names are listed in the remarks column, so please use the CSS property names when searching for specifications online.
 
 ---
 
 ## JSON Structure
 
-Below is an example of the settings JSON structure.  
-**Copy-paste ready samples** are also available in the [`samples`](../samples) folder.
+The following is a sample to illustrate the JSON structure. **Ready-to-use samples for copy-pasting or importing** are available in the [`samples`](../samples) folder.
 
 ```json
 {
   "options": {
-    "icon_size": 64
+    "icon_size": 64,
+    "chat_content_max_width": "800px"
+  },
+  "features": {
+    "collapsible_button": {
+      "enabled": true,
+      "display_threshold_multiplier": 2
+    },
+    "scroll_to_top_button": {
+      "enabled": true,
+      "display_threshold_multiplier": 2
+    },
+    "sequential_nav_buttons": {
+      "enabled": true
+    }
   },
   "themeSets": [
     {
-      "projects": [
-        "/\\[theme1\\]/i"
-      ],
+      "metadata": {
+        "id": "cpta-theme-example-1",
+        "name": "My Project Theme 1",
+        "matchPatterns": [
+          "/\\[theme1\\]/i",
+          "/My Project/i"
+        ]
+      },
       "user": {
         "name": "You",
         "icon": "url, SVG, base64, ...",
-        "textcolor": "#89c4f4",
+        "textColor": "#89c4f4",
         "font": "Meiryo, sans-serif",
-        "bubbleBgColor": "#232e3b",
+        "bubbleBackgroundColor": "#232e3b",
         "bubblePadding": "10px 14px",
         "bubbleBorderRadius": "16px",
         "bubbleMaxWidth": "70%",
-        "standingImage": ""
+        "standingImageUrl": ""
       },
       "assistant": {
-        "name": "ChatGPT",
+        "name": "Assistant",
         "icon": "url, SVG, base64, ...",
-        "textcolor": "#ffe4e1",
+        "textColor": "#ffe4e1",
         "font": "Meiryo, sans-serif",
-        "bubbleBgColor": "#384251",
+        "bubbleBackgroundColor": "#384251",
         "bubblePadding": "10px 14px",
         "bubbleBorderRadius": "16px",
         "bubbleMaxWidth": "90%",
-        "standingImage": ""
+        "standingImageUrl": ""
       },
-      "windowBgColor": "#151b22",
-      "windowBgImage": "url('url here')",
-      "windowBgSize": "cover",
-      "windowBgPosition": "center center",
-      "windowBgRepeat": "no-repeat",
-      "windowBgAttachment": "scroll",
-      "inputAreaBgColor": "#202531",
-      "inputAreaTextColor": "#e3e3e3",
-      "inputAreaPlaceholderColor": "#5e6b7d"
+      "window": {
+        "backgroundColor": "#151b22",
+        "backgroundImageUrl": "url('url here')",
+        "backgroundSize": "cover",
+        "backgroundPosition": "center center",
+        "backgroundRepeat": "no-repeat",
+        "backgroundAttachment": "scroll"
+      },
+      "inputArea": {
+        "backgroundColor": "#202531",
+        "textColor": "#e3e3e3",
+        "placeholderColor": "#5e6b7d"
+      }
     },
     {
-      "(you can add as many themes as you want)"
+      "metadata": {
+        "id": "cpta-theme-example-2",
+        "name": "(Theme name here)",
+        "matchPatterns": [
+          "(Regular expression here)"
+        ]
+      },
+      "..." : "(You can add as many theme settings as you like)"
     }
   ],
   "defaultSet": {
     "user": {
       "name": "You",
       "icon": "",
-      "textcolor": "#009688",
+      "textColor": null,
       "font": null,
-      "bubbleBgColor": null,
+      "bubbleBackgroundColor": null,
       "bubblePadding": null,
       "bubbleBorderRadius": null,
       "bubbleMaxWidth": null,
-      "standingImage": null
+      "standingImageUrl": null
     },
     "assistant": {
       "name": "ChatGPT",
       "icon": "",
-      "textcolor": "#ff9800",
+      "textColor": null,
       "font": null,
-      "bubbleBgColor": null,
+      "bubbleBackgroundColor": null,
       "bubblePadding": null,
       "bubbleBorderRadius": null,
       "bubbleMaxWidth": null,
-      "standingImage": null
+      "standingImageUrl": null
     },
-    "windowBgColor": null,
-    "windowBgImage": null,
-    "windowBgSize": "cover",
-    "windowBgPosition": "center center",
-    "windowBgRepeat": "no-repeat",
-    "windowBgAttachment": "fixed",
-    "inputAreaBgColor": null,
-    "inputAreaTextColor": null,
-    "inputAreaPlaceholderColor": null
+    "window": {
+      "backgroundColor": null,
+      "backgroundImageUrl": null,
+      "backgroundSize": "cover",
+      "backgroundPosition": "center center",
+      "backgroundRepeat": "no-repeat",
+      "backgroundAttachment": "fixed"
+    },
+    "inputArea": {
+      "backgroundColor": null,
+      "textColor": null,
+      "placeholderColor": null
+    }
   }
 }
-```
+````
 
----
+-----
 
 ## Overall Structure
 
-| Key Name     | Description / Example                                                                             |
-| ------------ | ------------------------------------------------------------------------------------------------- |
-| `options`    | Global script options                                                                             |
-| `themeSets`  | Theme definitions. You can create multiple theme sets.                                            |
-| `defaultSet` | The default theme. This is used if no `themeSets` definition matches the current project/session. |
+| Item Name  | Description/Example                                                                                            |
+| ---------- | -------------------------------------------------------------------------------------------------------------- |
+| `options`  | Common settings for script behavior and display.                                                               |
+| `features` | Settings to enable/disable UI improvement features.                                                            |
+| `themeSets`  | An array of theme settings. You can create multiple themes.                                                    |
+| `defaultSet` | The default theme settings. Applied when no theme in `themeSets` matches.                                      |
 
----
+-----
 
 ## `"options"` Settings
 
-| Property      | Purpose / Description                   | Example  | Notes & Allowed Values                                       |
-|---------------|----------------------------------------|----------|--------------------------------------------------------------|
-| icon_size     | Icon size for user/assistant icons      | 64       | Default is `64`. <br> Recommended: `64`, `96`, or `128`.     |
+| Property Name            | Description                             | Example                    | Notes/Allowed Values                                                                                    |
+| ------------------------ | --------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `icon_size`              | Icon size                               | `64`                       | Number. Default is `64`.<br>Values `64`, `96`, or `128` are recommended for balanced display.           |
+| `chat_content_max_width` | Max width of the chat content area.     | `'800px'`<br>`'70vw'`       | A valid CSS `max-width` value as a string.<br>Blank or `null` for ChatGPT's default.                    |
 
-### Display Example
+### Display Image (`icon_size`)
 
-| icon_size | Description / Recommended Use  | Example                                                |
+| icon\_size Value | Description & Recommended Use | Example                                                |
 |-----------|-------------------------------|--------------------------------------------------------|
 | 64        | **Default size** / standard   | ![icon_size=64](./cpta_iconsize_64.webp)               |
 | 96        | Larger icons                  | ![icon_size=96](./cpta_iconsize_96.webp)               |
 | 128       | Extra-large (character art)   | ![icon_size=128](./cpta_iconsize_128.webp)             |
 
----
+-----
 
-#### Sample JSON (`options` section)
+## `"features"` Settings
 
-```json
-  "options": {
-    "icon_size": 64
-  },
-````
+Configure ON/OFF and thresholds for convenient UI improvement features.
 
----
+| Property Name            | Description                                                                                     | Example                                                | Notes/Allowed Values                                                                                                                                                                                                                                                                                  |
+| ------------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `collapsible_button`     | Settings for the button to collapse long messages.                                              | `{ "enabled": true, "display_threshold_multiplier": 2 }` | `enabled`: `true`/`false`<br>`display_threshold_multiplier`: Height threshold to show the button (as a multiple of icon size). `2` means it appears on messages taller than twice the icon size. `0` shows it always. |
+| `scroll_to_top_button`   | Settings for the button to scroll to the top of a message (turn).                               | `{ "enabled": true, "display_threshold_multiplier": 2 }` | `enabled`: `true`/`false`<br>`display_threshold_multiplier`: Height threshold to show the button. It also appears on long, multi-part responses. `0` shows it always.                                                               |
+| `sequential_nav_buttons` | Settings for the buttons to jump to the next/previous message from the same author (user or assistant). | `{ "enabled": true }`                                  | `enabled`: `true`/`false`                                                                                                                                                                                                                                                                             |
+
+-----
 
 ## `"themeSets"` Settings
 
-| Property | Purpose / Description                                                                                                                                                                                                                                                              | Example                                                | Notes & Allowed Values                                                                                                                                                                                                                                                                                                                                                                    |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| projects | Match the window title using these conditions. <br>**Must be an array of regular expression strings.** <br><br>**Backslashes (`\`) must be double-escaped (`\\`) in JSON.** <br><br>Main uses:<br>- Partial match on project name<br>- Custom GPT (custom AI) name<br>- Chat title | `[ "/myproject/i", "/^Project\\d+/", "/^\\[BUG\\]/" ]` | Array of regex strings, format: `"/pattern/flags"`. <br> See online regex references for syntax. <br> To match most projects, just write `"/your-project-name/i"`. <br> To apply this theme to multiple projects, list them comma-separated in the array. <br>**Examples:**<br>- Contains `"myproject"` (case-insensitive)<br>- Starts with `"Project"+number`<br>- Starts with `"[BUG]"` |
+You can define multiple themes as an array of objects in `themeSets`.
 
----
+### `"metadata"` (Theme Information)
 
-#### Sample JSON (`projects` section)
+At the beginning of each theme object, describe the theme's information in `metadata`.
 
-```json
-{
-  "projects": [
-    "/myproject/i",
-    "/^Project\\d+/",
-    "/^\\[BUG\\]/"
-  ],
-}
-```
+| Property Name     | Description                  | Example                                  | Notes/Allowed Values                                                                                                                                                                                                                                     |
+| ----------------- | ---------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | Unique ID for the theme      | `"cpta-theme-12345"`                     | An ID for internal management by the script. You usually don't need to edit this. It is automatically assigned when a new theme is created in the theme editor. |
+| `name`            | Theme name                   | `"My Project Theme"`                     | The name displayed in the theme editor's dropdown. Use a descriptive name.                                                                                                                                                                                |
+| `matchPatterns`   | Theme application conditions | `[ "/myproject/i", "/^Project\\\\d+/" ]` | An **array of regular expression strings**. The theme is applied if the window title matches these conditions.<br>**Backslashes (\\) must be escaped twice (\\\\) in the JSON.**<br><br>**Examples:**<br>- Contains `"myproject"` (case-insensitive with `/i`)<br>- Starts with `"Project"` followed by a number |
 
----
+-----
 
-## User / Assistant Settings
+### User/Assistant Settings (`"user"` / `"assistant"`)
 
-| Property            | Purpose / Description                        | Example                                    | Notes & Allowed Values                                                                                                                                               |
-|---------------------|---------------------------------------------|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **name**            | Display name                                | `"You"` <br> `"ChatGPT"`                   | Any string value                                                                                                               |
-| **icon**            | Icon image, SVG, base64, etc.               | `"https://.../icon.png"` <br> `"SVG code"` <br> `"data:image/png;base64,..."` | Try [Google Fonts](https://fonts.google.com/icons) for SVGs.<br>When writing SVG code in JSON, all `"` must be escaped as `\"`. See the bookmarklet tool in the README for easy conversion. |
-| **textcolor**       | Text color                                  | `"#89c4f4"`                                | CSS color code (`#`, `rgb()`, color names, etc.)                                                                               |
-| **font**            | Font for the chat bubble                    | `"Meiryo, sans-serif"`                     | Any valid CSS font declaration                                                                                                |
-| **bubbleBgColor**   | Bubble background color                     | `"#222833"` <br> `"#343541"`               | CSS property: background-color                                                                                                |
-| **bubblePadding**   | Bubble inner padding                        | `"10px 14px"`                              | CSS property: padding                                                                                                         |
-| **bubbleBorderRadius** | Bubble corner radius                     | `"16px"`                                   | CSS property: border-radius (px, %)                                                                                           |
-| **bubbleMaxWidth**  | Maximum width of the bubble                 | `"400px"`                                  | CSS property: max-width (px, %)                                                                                               |
-| **standingImage**      | Standing image URL         | Example 1:<br>`"https://.../sample.png"`<br>Example 2:<br>`"linear-gradient(to bottom, rgba(0,128,255,0.8) 0%, transparent 40%, transparent 60%, rgba(0,255,128,0.7) 100%),url('https://.../sample.png')"`            | CSS property: `background-image` format.<br>For convenience, if a single image URL is used, you may write just the URL (Example 1). Alternatively, you may use the formal `url('...')` syntax.<br>To specify multiple images, list them comma-separated as per CSS rules (Example 2). |
+| Property Name           | Description           | Example                                | Notes/Allowed Values                                                                                                                                                                     |
+| ----------------------- | --------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                  | Display name          | `"You"`, `"ChatGPT"`                   | String                                                                                                                                                                                   |
+| `icon`                  | Icon image            | `"https://.../icon.png"`<br>`"<svg>..."` | URL, SVG code, Base64, etc.<br>When editing JSON directly, `"` in SVG code must be escaped as `\"`. Using the [SVG Escape Tool](#svg-escape-tool) is easy.<br>No escaping needed in the GUI. |
+| `textColor`             | Text color            | `"#89c4f4"`                             | CSS color code (\# notation, rgb(), name, etc.)                                                                                                                                          |
+| `font`                  | Font for the bubble   | `"Verdana", sans-serif`                  | CSS font declaration                                                                                                                                                                     |
+| `bubbleBackgroundColor` | Bubble background color | `"#222833"`                             | Corresponds to CSS `background-color`                                                                                                                                                      |
+| `bubblePadding`         | Bubble inner padding  | `"10px 14px"`                          | Corresponds to CSS `padding`                                                                                                                                                             |
+| `bubbleBorderRadius`    | Bubble corner radius  | `"16px"`                               | Corresponds to CSS `border-radius`                                                                                                                                                       |
+| `bubbleMaxWidth`        | Bubble max width      | `"70%"`                                | Corresponds to CSS `max-width`                                                                                                                                                           |
+| `standingImageUrl`      | Standing image URL    | `"https://.../sample.png"`             | `background-image` format. Can be a single URL or combined with `linear-gradient`, etc.                                                                                                |
 
+-----
 
----
+### Background Settings (`"window"`)
 
-## Background Settings
+| Property Name          | Description                       | Example                    | Notes/Allowed Values                                                                            |
+| ---------------------- | --------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------- |
+| `backgroundColor`      | Chat window background color      | `"#11131c"`                 | Corresponds to CSS `background-color`                                                             |
+| `backgroundImageUrl`   | Chat window background image      | `"https://.../bg.png"`     | `background-image` format. Can be a single URL or combined with `linear-gradient`, etc.         |
+| `backgroundSize`       | Background image size             | `"cover"`, `"contain"`     | Corresponds to CSS `background-size`                                                              |
+| `backgroundPosition`   | Background image position         | `"center center"`          | Corresponds to CSS `background-position`                                                          |
+| `backgroundRepeat`     | Background image repeat setting   | `"no-repeat"`, `"repeat"`  | Corresponds to CSS `background-repeat`                                                            |
+| `backgroundAttachment` | Background image attachment       | `"scroll"`, `"fixed"`      | Corresponds to CSS `background-attachment`                                                        |
 
-| Property            | Purpose / Description                          | Example                                        | Notes & Allowed Values                                                              |
-|---------------------|------------------------------------------------|------------------------------------------------|-------------------------------------------------------------------------------------|
-| **windowBgColor**   | Chat window background color                   | `"#11131c"`                                    | CSS property: background-color                                                      |
-| **windowBgImage**      | Chat window background image | Example 1:<br>`"https://.../samplebgbg.png"`<br>Example 2:<br>`"linear-gradient(to bottom, rgba(0,128,255,0.8) 0%, transparent 40%, transparent 60%, rgba(0,255,128,0.7) 100%),url('https://.../samplebgbg.png')"`            | CSS property: `background-image` format.<br>For convenience, if a single image URL is used, you may write just the URL (Example 1). Alternatively, you may use the formal `url('...')` syntax.<br>To specify multiple images, list them comma-separated as per CSS rules (Example 2). |
-| **windowBgSize**    | Background image size                          | `"cover"` <br> `"contain"` <br> `"auto"`       | CSS property: background-size                                                       |
-| **windowBgPosition**| Background image position                      | `"center center"` <br> `"left top"`            | CSS property: background-position                                                   |
-| **windowBgRepeat**  | Background image repeat                        | `"no-repeat"` <br> `"repeat"` <br> `"repeat-x"`| CSS property: background-repeat                                                     |
-| **windowBgAttachment** | Background image attachment (scroll/fixed)  | `"scroll"` <br> `"fixed"`                      | CSS property: background-attachment                                                 |
+-----
 
----
+### Chat Input Area Settings (`"inputArea"`)
 
-## Input Area Settings
+| Property Name      | Description                        | Example     | Notes/Allowed Values          |
+| ------------------ | ---------------------------------- | ----------- | ----------------------------- |
+| `backgroundColor`  | Input area background color        | `"#21212a"`  | Corresponds to CSS `background-color` |
+| `textColor`        | Input area text color              | `"#e3e3e3"`  | Corresponds to CSS `color`          |
+| `placeholderColor` | Input area placeholder text color  | `"#888"`     | Corresponds to CSS `color`          |
 
-| Property                  | Purpose / Description                        | Example      | Notes & Allowed Values                                        |
-|---------------------------|----------------------------------------------|--------------|---------------------------------------------------------------|
-| **inputAreaBgColor**          | Input area background color                | `"#21212a"`  | CSS property: background-color (color code)                   |
-| **inputAreaTextColor**        | Input area text color                      | `"#e3e3e3"`  | CSS property: color (color code)                              |
-| **inputAreaPlaceholderColor** | Input area placeholder text color          | `"#888"`     | CSS property: color (color code)                              |
-
----
+-----
 
 ## `"defaultSet"` Settings
 
-The default theme, applied if none of the `"themeSets"` match.  
-Has the same structure as the items in `"themeSets"`, but without a `"projects"` array.
+Sets the default theme. This is applied if no theme in `"themeSets"` matches.  
+The settings are the same as those for each theme in `"themeSets"`, excluding `"metadata"`.
 
----
+-----
 
 ## Tips
 
-- If you specify the chat bubble background color using `rgba()`, you can control transparency and let the background show through.
-- If you do **not** want to override ChatGPT’s default appearance for chats that don’t match any theme, set all properties in `defaultSet` to `null`. In this case, non-matching chats will display using the original ChatGPT theme.
-- If you want to use local images for icons, backgrounds, or standing images, encoding them as `base64` is possible. However, keep in mind this will increase the size of your JSON and may impact performance. Whenever possible, it’s recommended to use online resources (URLs).
+  * You can make the chat bubble background transparent by specifying an alpha value in `rgb(R G B / A)` for the background color.
+  * If you don't want to change the default theme from the standard ChatGPT, set all properties in `defaultSet` to `null`.
+  * While you can use `base64` encoding for local images for icons and backgrounds, it is recommended to use online resources to avoid bloating the settings JSON and potential performance degradation.
+
+-----
+
+## SVG Escape Tool
+
+You can set SVG code for icons, but when writing it in JSON, you need to escape the `"` characters in the SVG code as `\"`.  
+Since doing this manually is tedious, two simple tools are provided. Please use whichever you prefer.
+
+  - **[Web Tool (html)](https://p65536.github.io/ChatGPT-Project-Theme-Automator/tools/convert_svg.html)** ... Just open the link. The usage is self-explanatory.
+  - **Bookmarklet** ... Continue reading below.
+
+A bookmarklet is a feature that allows you to save JavaScript code in a bookmark and run it easily.  
+Follow the steps below to add it to your bookmarks.
+
+### 1\. Select all the text below (triple-click) and **drag and drop it onto your bookmarks bar.**
+
+```js
+javascript:(async()=>{function e(s){return s.replace(/\\/g,"\\\\").replace(/\"/g,'\\\"').replace(/\n/g,"");}try{const t=await navigator.clipboard.readText();if(!t.trim().startsWith("<svg")){alert("Clipboard does not contain SVG code.");return;}const a=e(t);await navigator.clipboard.writeText(a);alert("The SVG has been escaped and copied to your clipboard! Paste it into the icon item.");}catch(r){alert("Failed: "+r.message);}})()
+```
+
+### 2. When prompted, give the bookmarklet any name you like (e.g., "ConvSVG").
+
+(Example dialogs are shown below for Firefox.)
+
+  #### Add to bookmark
+
+  ![Bookmark registration dialog](./cpta_a001.png)
+
+  #### Save with any name
+
+  ![Example: name as ConvSVG](./cpta_a002.png)
+
+  #### Added to bookmark
+
+  ![Bookmark added](./cpta_a004.png)
+
+### 3. Usage
+
+1. Copy the SVG code you want to use (e.g., from [Google Fonts](https://fonts.google.com/icons)).
+
+   ![Google Fonts copy SVG](./cpta_a003.png)
+
+2. Click the “ConvSVG” bookmarklet.
+
+   ![Bookmarklet running](./cpta_a004.png)
+
+3. The escaped SVG code is now in your clipboard.
+
+   ![Success message](./cpta_a005.png)
+
+4. Paste it into the `"icon"` property in your JSON configuration:
+
+   ```json
+   "icon": "Paste here"
+   ```
