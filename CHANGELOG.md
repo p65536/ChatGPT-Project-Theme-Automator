@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.2] - 2025-07-02
+
+### Fixes
+- Fixed a bug where regular expressions were not checked correctly when importing JSON.
+
 ## [1.2.1] - 2025-07-02
 
 ### Fixes
