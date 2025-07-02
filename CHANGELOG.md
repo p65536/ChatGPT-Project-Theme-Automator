@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.1] - 2025-07-02
+
+### Fixes
+- Added CSS to remove the gradient at the bottom of the screen, which was introduced in the ChatGPT UI update on July 1, 2025. This resolves an issue where custom backgrounds were being obscured by the gradient.
+
+### Improvements
+- Improved the stability of theme application when displaying chat history or navigating between different chats. Added a process to scan all existing conversation turns on page load, making it less likely for themes to be missed. Specifically, this resolves an issue where the theme would not apply to the assistant's first message in a Custom GPT chat.
+
+### Refactoring
+- Refactored the method for applying themes to message bubbles. The injection of custom classes (e.g., `.cpta-user-bubble`) has been removed in favor of a simpler and more reliable CSS selector method. This reduces DOM manipulation and lowers the risk of conflicts with other scripts.
+
 ## [1.2.0] - 2025-07-01
 
 ### New Features

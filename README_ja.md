@@ -8,8 +8,8 @@
 
 [![Download](https://img.shields.io/badge/Download-ChatGPT_Project_Theme_Automator.user.js-blue?style=flat-square&logo=download)](https://github.com/p65536/ChatGPT-Project-Theme-Automator/raw/main/ChatGPT%20Project%20Theme%20Automator.user.js)
 
-![version](https://img.shields.io/badge/version-1.2.0-blue)  
-最終更新日: **2025/07/01**  
+![version](https://img.shields.io/badge/version-1.2.1-blue)  
+最終更新日: **2025/07/02**  
 [変更履歴はこちら](./CHANGELOG_ja.md)
 
 [English README is here.](./README.md)
