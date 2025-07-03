@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.3] - 2025-07-03
+
+### Fixes
+* **Fixed scroll area shrinking bug**: Resolved an issue where the scrollable area would shrink when using the message navigation buttons in Chrome-based browsers. The fix replaces `scrollIntoView()` with direct control of the `scrollTop` property.
+
+### Improvements
+- **Optimized DOM Observation**: Replaced per-turn `MutationObserver` instances with a single shared observer that manages all turns, significantly reducing memory usage and improving performance on long conversations.
+
+### Refactoring
+- **Class Responsibility Separation**: Moved CSS generation logic from `ThemeManager` to a new `StyleGenerator` class.
+- **Centralized Constants**: Consolidated all configuration values (such as CSS selectors and Z-INDEX) into a single `CONSTANTS` object.
+- **Eliminated Redundancy**: Unified ID generation and completion check logic into shared utility functions to improve code readability and maintain DRY principles.
+
 ## [1.2.2] - 2025-07-02
 
 ### Fixes
